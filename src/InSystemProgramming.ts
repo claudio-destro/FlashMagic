@@ -1,7 +1,7 @@
 'use strict';
 var com = require('serialport');
 
-var ERRORS: Array<string> = [
+const ERRORS: Array<string> = [
 	/*  0 */ 'Command is executed successfully',
 	/*  1 */ 'Invalid command',
 	/*  2 */ 'Source address is not on a word boundary',
@@ -24,35 +24,41 @@ var ERRORS: Array<string> = [
 	/* 19 */ 'Code read protection enabled'
 ];
 
-function nullResponse(code: number) { return code; }
+interface DataQueue<T> {
+	push(data: T): void;
+	pop(): T;
+	drain(): void;
+}
+
+class LineQueue implements DataQueue<string> {
+	private queue: string[] = [];
+	drain(): void { this.queue.length = 0; }
+	pop(): string { return this.queue.shift(); }
+	push(data: string): void { this.queue.push(data); }
+}
+
+const LINE_QUEUE = new LineQueue;
 
 export class InSystemProgramming {
 
 	private serialport;
-	private command: (data: string) => void = null;
-	private response: (code: number) => number = nullResponse;
-	private responseCode: number = -1;
 
-	constructor(path: string, baud?: number) {
+	private queue: DataQueue<string> = LINE_QUEUE;
+
+	constructor(path: string, baud: number = 115200) {
+
 		this.serialport = new com.SerialPort(path, {
-			baudRate: baud || 115200,
+			baudRate: baud,
 			parser: com.parsers.readline('\r\n')
-		}, false);
+		}, false); // open later
+
 		this.serialport.on('data', (data: string|Buffer) => {
 			const s = data.toString();
 			console.info(`---> ${s}`);
-			if (this.command === null) {
-				if (this.responseCode < 0 && /^\d+$/.test(s)) {
-					this.responseCode = this.response(~~s);
-				} else {
-					console.error(`Dropped "${s}"`);
-				}
-			} else {
-				try {
-					this.command(s);
-				} finally {
-					this.command = null;
-				}
+			try {
+				this.queue.push(s);
+			} finally {
+				this.queue = LINE_QUEUE; // Reset strategy
 			}
 		});
 	}
@@ -65,6 +71,50 @@ export class InSystemProgramming {
 		});
 	}
 
+	read(timeout: number = 1000): Promise<string> {
+		return new Promise<string>((resolve, reject) => {
+
+			let s = this.queue.pop();
+			if (s) {
+				return resolve(s);
+			}
+
+			let to = setTimeout(() => {
+				try {
+					reject(new Error(`Timed out: > ${timeout}ms`));
+				} finally {
+					this.queue = LINE_QUEUE;
+				}
+			}, timeout);
+
+			// Temporary change queue strategy
+			this.queue = {
+				push: (data: string): void => {
+					// XXX cannot reset strategy here because of "this"
+					clearTimeout(to);
+					resolve(data);
+				},
+				pop: (): string => null,
+				drain: (): void => {}
+			};
+		});
+	}
+
+	write(data: string): Promise<void> {
+		const s = data.toString();
+		console.info(`<--- ${s}`);
+		this.queue.drain(); // XXX
+		return new Promise<void>((resolve, reject) => {
+			this.serialport.write(s + '\r\n', (error: any) => {
+				if (error) throw error;
+				this.serialport.drain((error: any) => {
+					if (error) throw error;
+					resolve();
+				});
+			});
+		});
+	}
+
 	close(): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
 			this.serialport.close((error: any) => {
@@ -73,66 +123,41 @@ export class InSystemProgramming {
 		});
 	}
 
-	send(data: string|number|Buffer): Promise<void> {
-		const s = data.toString();
-		console.info(`<--- ${s}`);
-		return new Promise<void>((resolve, reject) => {
-			if (this.command !== null) {
-				return reject(new Error('Busy'));
-			}
-			const to = setTimeout(() => {
-				this.command = null;
-				reject(new Error('Timed out'));
-			}, 100);
-			this.command = (data) => {
-				clearTimeout(to);
-				if (data.toString() !== s) {
-					reject(new Error('Mismatch'));
-				} else {
-					resolve();
-				}
-			};
-			this.serialport.write(s + '\r\n', (error: any) => {
-				if (error) return reject(error);
-				this.serialport.drain((error: any) => {
-					return error ? reject(error) : resolve();
-				});
+	/////////////
+	// HELPERS //
+	/////////////
+
+	sendCommand(data: string): Promise<string|void> {
+		return this.write(data).then(() => {
+			return this.read().then((ack) => {
+				if (ack !== data) throw new Error(`Not acknowledged: ${JSON.stringify(ack)}`);
+				return this.assertSuccess();
 			});
 		});
 	}
 
-	assertSuccess(): Promise<void> {
-		return new Promise<void>((resolve, reject) => {
-
-			var resolver = (rc: number): number => {
-				this.responseCode = -1;
-				this.response = nullResponse;
-				if (rc > 0) {
-					reject(new Error(ERRORS[rc]));
-				} else {
-					resolve();
-				}
-				return -1;
-			};
-
-			let rc = this.responseCode;
-			if (rc < 0) {
-				const to = setTimeout(() => {
-					this.responseCode = -1;
-					this.response = nullResponse;
-					reject(new Error('Timed out'));
-				});
-				this.response = resolver;
-			} else {
-				resolver(rc);
+	assertSuccess(): Promise<string|void> {
+		return this.read().then((data) => {
+			if (!(/^\d+$/.test(data))) {
+				throw new TypeError(`Not a number: ${JSON.stringify(data)}`);
+			}
+			let rc = ~~data;
+			if (rc > 0) {
+				throw new Error(ERRORS[rc]);
 			}
 		});
 	}
 
-	sendUnlockCommand(): Promise<void> {
-		return this.send("U 23130").then(() => {
-			return this.assertSuccess();
+	assertOK(): Promise<string|void> {
+		return this.read().then((data) => {
+			if (data !== 'OK') {
+				throw new Error(`Not "OK": "${JSON.stringify(data)}"`);
+			}
 		});
+	}
+
+	sendUnlockCommand(): Promise<string|void> {
+		return this.sendCommand("U 23130");
 	}
 
 }

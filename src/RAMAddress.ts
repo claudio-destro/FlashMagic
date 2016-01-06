@@ -11,6 +11,7 @@ export class RAMAddress {
 	get address() { return this[_addressSym]; }
 
 	constructor(addr: number) {
+		addr = ~~addr; // toInteger
 		if (addr & 3) {
 			throw new RangeError(`RAM address 0x${addr.toString(16)} must be aligned`);
 		}

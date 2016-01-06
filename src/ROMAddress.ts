@@ -8,18 +8,23 @@ const _sectorSym = Symbol();
 
 export class ROMAddress {
 
-	static get BASE() { return 0x00000000; }
-	static get SIZE() { return 0x0007E000; } // 504 KB
+	static get BASE() { return 0; }
+	static get SIZE() { return FlashMemory.MAX_ADDRESS + 1; } // 504 KB
 
 	get address(): number { return this[_addressSym]; }
 	get sector(): number { return this[_sectorSym]; }
 
 	constructor(addr: number, sect: number) {
+		addr = ~~addr; // toInteger
+		sect = ~~sect; // toInteger
 		if (addr & 3) {
 			throw new RangeError(`ROM address 0x${addr.toString(16)} must be aligned`);
 		}
 		if (addr < ROMAddress.BASE || addr >= ROMAddress.BASE + ROMAddress.SIZE) {
 			throw new RangeError(`ROM address 0x${addr.toString(16)} out of range`);
+		}
+		if (sect < 0 || sect > FlashMemory.MAX_SECTOR) {
+
 		}
 		this[_addressSym] = addr;
 		this[_sectorSym] = sect;

@@ -1,26 +1,18 @@
-// import {RAMAddress} from "./RAMAddress";
-// import {ROMAddress} from "./ROMAddress";
+'use strict';
 import {InSystemProgramming} from "./InSystemProgramming";
-// var com = require('serialport');
-
-// var sp = new com.SerialPort('/dev/tty.usbserial-FTBTBAAW', {
-// 	baudRate: 115200,
-// 	parser: com.parsers.readline('\r\n')
-// });
-// sp.on('data', (data) => {
-// 	console.log(new Date(), data);
-// });
+import {LPCProgrammer} from "./LPCProgrammer";
 
 var isp = new InSystemProgramming('/dev/tty.usbmodemFD131');
-// var isp = new InSystemProgramming('/dev/tty.usbserial-FTBTBAAW');
+var lpc = new LPCProgrammer(isp, 0x00070000);
 isp.open().then(() => {
-	console.log('open');
-	return isp.sendUnlockCommand();
+	return lpc.eraseBlock(512);
 }).then(() => {
-	console.log('OKKEJO!');
-	return isp.close();
-}).catch((err) => {
-	console.error(err);
-})
-// console.log(new RAMAddress(RAMAddress.BASE));
-// console.log(ROMAddress.fromAddress(0x31A8));
+	console.info('Done');
+	isp.close();
+	process.exit();
+}).catch((error) => {
+	console.error(error);
+	isp.close();
+	process.exit(1);
+});
+
