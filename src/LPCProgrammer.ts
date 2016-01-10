@@ -32,9 +32,9 @@ export class LPCProgrammer {
 		let endSect = FlashMemory.addressToSector(dstAddr + count - 1);
 		return this.isp.sendUnlockCommand()
 			.then(() => {
-				return this.isp.sendCommand(`P ${startSect} ${endSect}`);
+				return this.isp.sendLine(`P ${startSect} ${endSect}`);
 			}).then(() => {
-				return this.isp.sendCommand(`E ${startSect} ${endSect}`);
+				return this.isp.sendLine(`E ${startSect} ${endSect}`);
 			});
 	}
 

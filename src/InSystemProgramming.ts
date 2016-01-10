@@ -73,30 +73,28 @@ export class InSystemProgramming {
 
 	read(timeout: number = 1000): Promise<string> {
 		return new Promise<string>((resolve, reject) => {
-
 			let s = this.queue.pop();
 			if (s) {
 				return resolve(s);
 			}
-
-			let to = setTimeout(() => {
+			((to) => {
+				// Temporary change queue strategy
+				this.queue = {
+					push: (data: string): void => {
+						// XXX cannot reset strategy here because of "this"
+						clearTimeout(to);
+						resolve(data);
+					},
+					pop: (): string => { throw new Error('Not implemented'); },
+					drain: (): void => { throw new Error('Not implemented'); }
+				};
+			})(setTimeout(() => {
 				try {
 					reject(new Error(`Timed out: > ${timeout}ms`));
 				} finally {
 					this.queue = LINE_QUEUE;
 				}
-			}, timeout);
-
-			// Temporary change queue strategy
-			this.queue = {
-				push: (data: string): void => {
-					// XXX cannot reset strategy here because of "this"
-					clearTimeout(to);
-					resolve(data);
-				},
-				pop: (): string => null,
-				drain: (): void => {}
-			};
+			}, timeout));
 		});
 	}
 
@@ -127,11 +125,13 @@ export class InSystemProgramming {
 	// HELPERS //
 	/////////////
 
-	sendCommand(data: string): Promise<string|void> {
+	sendLine(data: string, waitSuccess: boolean = true): Promise<string|void> {
 		return this.write(data).then(() => {
 			return this.read().then((ack) => {
 				if (ack !== data) throw new Error(`Not acknowledged: ${JSON.stringify(ack)}`);
-				return this.assertSuccess();
+				if (waitSuccess) {
+					return this.assertSuccess();
+				}
 			});
 		});
 	}
@@ -157,7 +157,7 @@ export class InSystemProgramming {
 	}
 
 	sendUnlockCommand(): Promise<string|void> {
-		return this.sendCommand("U 23130");
+		return this.sendLine("U 23130");
 	}
 
 }

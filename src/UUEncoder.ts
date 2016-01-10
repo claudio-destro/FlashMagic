@@ -3,7 +3,7 @@ var Symbol = require('es6-symbol');
 
 const _checksumSym = Symbol();
 
-export default class UUEncoder {
+export class UUEncoder {
 
 	constructor() {
 		this[_checksumSym] = 0;
@@ -17,7 +17,7 @@ export default class UUEncoder {
 		this[_checksumSym] = 0;
 	}
 
-	encode(data: Uint8Array, offset: number, length: number): string {
+	encode(data: Buffer|Uint8Array, offset: number, length: number): string {
 		let out = encodeSingle(length);
 		let sum = 0;
 		const n = ~~(length / 3) * 3;

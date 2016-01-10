@@ -5,89 +5,139 @@ import {InSystemProgramming} from './InSystemProgramming';
 import {FlashMemory} from './FlashMemory';
 import {RAMAddress} from './RAMAddress';
 import {ROMAddress} from './ROMAddress';
+import {UUEncoder} from './UUEncoder';
 
+import {EventEmitter} from 'events';
+import * as assert from 'assert';
 import * as stream from 'stream';
 
 const _addressSym = Symbol();
 
-function alignCount(count: number): number {
-	count = ~~count;
-	if ((count & 3) == 0) {
-		return count;
-	}
-	return 4 + (count & ~3);
+function toBuffer(data: Buffer|String): Buffer {
+	return Buffer.isBuffer(data) ? <Buffer>data : new Buffer(<string>data, 'binary');
 }
+
+class Progress extends EventEmitter {}
+
+function nextTick(cb: Function): void { process.nextTick(cb); } // setTimeout;
 
 export class RAMWriter {
 
 	static get LINES_PER_CHUNK() { return 20; }
 	static get BYTES_PER_LINE() { return 45; }
 
-	constructor(private isp: InSystemProgramming) {
+	static alignCount(count: number): number {
+		count = ~~count;
+		if ((count & 3) === 0) {
+			return count;
+		}
+		return 4 + (count & ~3);
 	}
+
+	constructor(private isp: InSystemProgramming) {	}
 
 	set address(address: RAMAddress) { this[_addressSym] = address; }
 	get address(): RAMAddress { return this[_addressSym]; }
 
-	// private static final int readFully(byte[] buffer, InputStream in)
-	// 		throws IOException {
-	// 	int index = 0;
-	// 	for (final int length = buffer.length; index < length; ) {
-	// 		final int bytesRead = in.read(buffer, index, length - index);
-	// 		if (bytesRead < 0) {
-	// 			break;
-	// 		}
-	// 		index += bytesRead;
-	// 	}
-	// 	return index; // XXX Do not care about last chunk's length
-	// }
+	writeBuffer(buffer: Buffer): Promise<void> {
+		assert((buffer.length & 3) === 0);
+		assert(this.address.address > (RAMAddress.BASE + 1024));
+		return this.isp.sendLine(`W ${this.address} ${buffer.length}`)
+			.then(() => {
+				return this.uploadChunk(buffer);
+			}).then(() => {
+				return this.isp.assertSuccess();
+			}).then(() => {
+				this[_addressSym] = this.address.increment(buffer.length);
+			});
+	}
 
-	// public int writeToRAM(InputStream in, int count) throws IOException {
-	// 	assert in.markSupported() : "Input stream not buffered";
-	// 	assert count > 0 : "Could not load less than 1 byte";
-	// 	// Align count to word boundary and read chunk
-	// 	final byte[] buffer = new byte[alignCount(count)];
-	// 	count = alignCount(readFully(buffer, in));
-	// 	if (count > 0) {
-	// 		// Write chunk to RAM
-	// 		isp.sendCommand("W " + address.getAddress() + " " + count);
-	// 		uploadChunk(new ByteArrayInputStream(buffer), count);
-	// 		isp.assertCmdSuccess();
-	// 		// Go to next chunk address
-	// 		address = address.increment(count);
-	// 	}
-	// 	return count;
-	// }
+	private uploadChunk(buffer: Buffer): Promise<void> {
+		return new Promise<void>((resolve, reject) => {
+			let uue = new UUEncoder();
+			let isp = this.isp;
+			let lineCount = 0;
+			let index = 0;
+			(function loop() {
+				if (lineCount === RAMWriter.LINES_PER_CHUNK || index >= buffer.length) {
+					isp.sendLine(uue.checksum.toString(), false).then(() => {
+						uue.reset();
+						lineCount = 0;
+						return isp.assertOK();
+					}).then(() => {
+						if (index < buffer.length) {
+							nextTick(loop);
+						} else {
+							resolve();
+						}
+					}).catch((error) => {
+						reject(error);
+					});
+				} else { // if (index < buffer.length) {
+					let count = Math.min(RAMWriter.BYTES_PER_LINE, buffer.length - index);
+					isp.sendLine(uue.encode(buffer, index, count), false).then(() => {
+						index += count;
+						lineCount++;
+						nextTick(loop);
+					}).catch((error) => {
+						reject(error);
+					});
+				}
+			})();
+		});
+	}
 
-	// private void uploadChunk(InputStream in, int count) throws IOException {
-	// 	in.mark(LINES_PER_CHUNK * BYTES_PER_LINE);
-	// 	final byte[] buffer = new byte[BYTES_PER_LINE];
-	// 	final UUEncoder uue = new UUEncoder();
-	// 	int lastByteCount = count;
-	// 	int lineCount = 0;
-	// 	int len;
-	// 	do {
-	// 		len = in.read(buffer, 0, Math.min(buffer.length, count));
-	// 		if (len > 0) {
-	// 			isp.sendLine(uue.encodeLine(buffer, 0, len));
-	// 			count -= len;
-	// 			lineCount++;
-	// 		}
-	// 		if (lineCount == LINES_PER_CHUNK || len < 0 || count == 0) {
-	// 			isp.sendInteger(uue.getChecksum());
-	// 			uue.reset();
-	// 			lineCount = 0;
-	// 			final String ok = isp.readLine();
-	// 			if ("OK".equals(ok)) {
-	// 				lastByteCount = count;
-	// 				in.mark(LINES_PER_CHUNK * BYTES_PER_LINE);
-	// 			} else {
-	// 				count = lastByteCount;
-	// 				in.reset();
-	// 				len = 0;
-	// 			}
-	// 		}
-	// 	} while (len >= 0 && count > 0);
-	// }
+	writeFile(readable: stream.Readable, chunkSize: number = 1024): EventEmitter {
+
+		const writer: RAMWriter = this;
+		const em: EventEmitter = new Progress;
+
+		const buffer = new Buffer(RAMWriter.alignCount(chunkSize));
+		let offset = 0;
+
+		readable.on('open', () => em.emit('start'));
+
+		readable.on('data', (data: Buffer | String) => {
+			let chunk = toBuffer(data);
+			readable.pause();
+
+			function proceed(): void {
+				if (chunk.length) {
+					nextTick(execute);
+				} else {
+					readable.resume();
+				}
+			}
+
+			let execute = () => {
+				let written = Math.min(buffer.length - offset, chunk.length);
+				chunk.copy(buffer, offset, 0, written);
+				offset += written;
+				chunk = chunk.slice(written);
+				if (offset === buffer.length) {
+					offset = 0;
+					em.emit('chunk', buffer);
+					writer.writeBuffer(buffer)
+						.then(proceed)
+						.catch(error => em.emit('error', error));
+				} else {
+					proceed();
+				}
+			}
+
+			execute(); // start
+		});
+
+		readable.on('end', () => {
+			if (offset) {
+				em.emit('chunk', buffer.slice(0, offset));
+				writer.writeBuffer(buffer)
+					.then(() => em.emit('end'))
+					.catch(error => em.emit('error', error));
+			}
+		});
+
+		return em;
+	}
 
 }
