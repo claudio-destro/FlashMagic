@@ -53,18 +53,25 @@ export class LPCProgrammer {
 			let chunk = toBuffer(data);
 			readable.pause();
 
-			function proceed(): void {
-				if (chunk.length) {
+			let proceed = (): void => {
+				console.log('CHI T\' MURRT', ended, offset, chunk.length);
+				if (ended) {
+					if (offset) {
+						em.emit('chunk', buffer.slice(0, offset));
+						this.programBuffer(buffer)
+							.then(() => em.emit('end'))
+							.catch(error => em.emit('error', error));
+					} else {
+						em.emit('end');
+					}
+				} else if (chunk.length) {
 					process.nextTick(execute);
 				} else {
 					readable.resume();
-					if (ended) {
-						em.emit('end');
-					}
 				}
 			}
 
-			let execute = () => {
+			let execute = (): void => {
 				let written = Math.min(buffer.length - offset, chunk.length);
 				chunk.copy(buffer, offset, 0, written);
 				offset += written;
