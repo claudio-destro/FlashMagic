@@ -1,7 +1,7 @@
 'use strict';
 var Symbol = require('es6-symbol');
 
-import {FlashMemory} from './FlashMemory';
+import * as FlashMemory from './FlashMemory';
 
 const _addressSym = Symbol();
 const _sectorSym = Symbol();
@@ -35,7 +35,7 @@ export class ROMAddress {
 	}
 
 	valueOf(): number {
-		return this[_addressSym];
+		return this.address;
 	}
 
 	static fromAddress(addr: number): ROMAddress {

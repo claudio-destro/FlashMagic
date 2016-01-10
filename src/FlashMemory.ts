@@ -16,50 +16,43 @@ const SECTOR_ADDRESS = new Uint32Array([
 	0x0007E000
 ]);
 
-const MIN_SECTOR = 2;
-const MAX_SECTOR = SECTOR_ADDRESS.length - 2;
+export const MIN_SECTOR = 2;
+export const MAX_SECTOR = SECTOR_ADDRESS.length - 2;
 
-export class FlashMemory {
+export const MIN_ADDRESS = SECTOR_ADDRESS[MIN_SECTOR];
+export const MAX_ADDRESS = SECTOR_ADDRESS[MAX_SECTOR + 1] - 1;
 
-	static get MIN_ADDRESS() { return SECTOR_ADDRESS[MIN_SECTOR]; }
-	static get MAX_ADDRESS() { return SECTOR_ADDRESS[MAX_SECTOR + 1] - 1; }
-
-	static get MIN_SECTOR() { return MIN_SECTOR; }
-	static get MAX_SECTOR() { return MAX_SECTOR; }
-
-	static addressToSector(addr: number): number {
-		if (addr >= FlashMemory.MIN_ADDRESS) {
-			for (let i = MIN_SECTOR; i <= MAX_SECTOR; i++) {
-				if (addr < SECTOR_ADDRESS[i + 1]) {
-					return i;
-				}
+export function addressToSector(addr: number): number {
+	if (addr >= MIN_ADDRESS) {
+		for (let i = MIN_SECTOR; i <= MAX_SECTOR; i++) {
+			if (addr < SECTOR_ADDRESS[i + 1]) {
+				return i;
 			}
 		}
-		throw new TypeError(`Bad address 0x${addr.toString(16)}`);
 	}
-
-	static sectorToAddress(sect: number): number {
-		if (sect >= MIN_SECTOR && sect <= MAX_SECTOR) {
-			return SECTOR_ADDRESS[~~sect];
-		}
-		throw new TypeError(`Bad sector ${sect}`);
-	}
-
-	static sectorSize(sect: number): number {
-		if (sect >= MIN_SECTOR && sect <= MAX_SECTOR) {
-			return SECTOR_ADDRESS[sect + 1] - SECTOR_ADDRESS[sect];
-		}
-		throw new TypeError(`Bad sector ${sect}`);
-	}
-
+	throw new TypeError(`Bad address 0x${addr.toString(16)}`);
 }
 
-// console.log(`Address [0x${FlashMemory.MIN_ADDRESS.toString(16)}...0x${FlashMemory.MAX_ADDRESS.toString(16)}]
-// Sector [${FlashMemory.MIN_SECTOR}...${FlashMemory.MAX_SECTOR}]`);
+export function sectorToAddress(sect: number): number {
+	if (sect >= MIN_SECTOR && sect <= MAX_SECTOR) {
+		return SECTOR_ADDRESS[~~sect];
+	}
+	throw new TypeError(`Bad sector ${sect}`);
+}
 
-// console.log(FlashMemory.addressToSector(0x0007DFFF));
-// var n = FlashMemory.addressToSector(0x0007D000);
-// console.log(n + ' ' + (FlashMemory.sectorSize(n) / 1024) + 'KB');
+export function sectorSize(sect: number): number {
+	if (sect >= MIN_SECTOR && sect <= MAX_SECTOR) {
+		return SECTOR_ADDRESS[sect + 1] - SECTOR_ADDRESS[sect];
+	}
+	throw new TypeError(`Bad sector ${sect}`);
+}
 
-// console.log('0x' + FlashMemory.sectorToAddress(27).toString(16));
-// console.log('0x' + FlashMemory.sectorToAddress(2).toString(16));
+// console.log(`Address [0x${MIN_ADDRESS.toString(16)}...0x${MAX_ADDRESS.toString(16)}]
+// Sector [${MIN_SECTOR}...${MAX_SECTOR}]`);
+
+// console.log(addressToSector(0x0007DFFF));
+// var n = addressToSector(0x0007D000);
+// console.log(n + ' ' + (sectorSize(n) / 1024) + 'KB');
+
+// console.log('0x' + sectorToAddress(27).toString(16));
+// console.log('0x' + sectorToAddress(2).toString(16));

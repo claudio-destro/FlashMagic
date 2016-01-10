@@ -1,52 +1,95 @@
 'use strict';
 
 import {InSystemProgramming} from './InSystemProgramming';
-import {FlashMemory} from './FlashMemory';
+import * as FlashMemory from './FlashMemory';
 import {RAMAddress} from './RAMAddress';
 import {ROMAddress} from './ROMAddress';
+import {RAMWriter} from './RAMWriter';
+import {ROMWriter} from './ROMWriter';
 
-import * as fs from 'fs';
+import {EventEmitter} from 'events';
+import * as assert from 'assert';
+import * as stream from 'stream';
+
+class Progress extends EventEmitter { }
+
+function toBuffer(data: Buffer | String): Buffer {
+	return Buffer.isBuffer(data) ? <Buffer>data : new Buffer(<string>data, 'binary');
+}
 
 export class LPCProgrammer {
 
-	private flashAddress: ROMAddress;
-	private bufferAddress: RAMAddress;
-	private bufferSize: number;
+	private uploader: RAMWriter;
+	private flasher: ROMWriter;
 
 	constructor(private isp: InSystemProgramming,
-				dst: number,
-				src: number = RAMAddress.BASE + 1024 * 10,
-				len: number = 1024 * 1) {
-		this.flashAddress = ROMAddress.fromAddress(dst);
-		this.bufferAddress = new RAMAddress(src);
-		this.bufferSize = ~~len;
+				private destAddr: number,
+				private srcAddr: number = RAMAddress.BASE + 1024 * 10,
+				private chunkSize: number = 1024 * 1) {
+		this.uploader = new RAMWriter(isp);
+		this.flasher = new ROMWriter(isp);
+		this.flasher.romAddress = ROMAddress.fromAddress(destAddr);
 	}
 
-	program(inp: fs.ReadStream, count: number): Promise<void> {
-		return null;
+	writeFile(readable: stream.Readable): EventEmitter {
+
+		const em: EventEmitter = new Progress;
+		const buffer = new Buffer(this.chunkSize);
+		let offset;
+		let ended: boolean = false;
+
+		let resetBuffer = () => {
+			offset = 0;
+			buffer.fill(0);
+			this.uploader.ramAddress = new RAMAddress(this.srcAddr);
+		};
+		resetBuffer();
+
+		readable.on('open', () => em.emit('start'));
+		readable.on('error', () => em.emit('error'));
+		readable.on('end', () => ended = true);
+
+		readable.on('data', (data: Buffer | String) => {
+			let chunk = toBuffer(data);
+			readable.pause();
+
+			function proceed(): void {
+				if (chunk.length) {
+					process.nextTick(execute);
+				} else {
+					readable.resume();
+					if (ended) {
+						em.emit('end');
+					}
+				}
+			}
+
+			let execute = () => {
+				let written = Math.min(buffer.length - offset, chunk.length);
+				chunk.copy(buffer, offset, 0, written);
+				offset += written;
+				chunk = chunk.slice(written);
+				if (offset === buffer.length) {
+					em.emit('chunk', buffer);
+					this.programBuffer(buffer)
+						.then(resetBuffer)
+						.then(proceed)
+						.catch(error => em.emit('error', error));
+				} else {
+					proceed();
+				}
+			};
+			execute(); // start
+		});
+
+		return em;
 	}
 
-	eraseBlock(count: number): Promise<void> {
-		let dstAddr = this.flashAddress.address;
-		let startSect = this.flashAddress.sector;
-		let endSect = FlashMemory.addressToSector(dstAddr + count - 1);
-		return this.isp.sendUnlockCommand()
+	private programBuffer(buffer: Buffer): Promise<void> {
+		let ramAddr = this.uploader.ramAddress;
+		return this.uploader.writeBuffer(buffer)
 			.then(() => {
-				return this.isp.sendLine(`P ${startSect} ${endSect}`);
-			}).then(() => {
-				return this.isp.sendLine(`E ${startSect} ${endSect}`);
+				return this.flasher.copyBlock(ramAddr, buffer.length);
 			});
 	}
-
-// 	public void program(InputStream in, int count) throws IOException {
-// 		final FlashWriter writer = new FlashWriter(isp, bufferAddress);
-// 		writer.setAddress(flashAddress);
-// 		eraseBlock(count);
-// 		while (count > 0) {
-// 			final int chunkSize = Math.min(bufferSize, count);
-// 			final int written = writer.writeToRAM(in, chunkSize);
-// 			count -= writer.copyRAMToFlash(written);
-// 		}
-// 	}
-
 }
