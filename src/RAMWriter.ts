@@ -42,7 +42,7 @@ export class RAMWriter {
 	writeBuffer(buffer: Buffer): Promise<void> {
 		assert((buffer.length & 3) === 0);
 		assert(this.address.address > (RAMAddress.BASE + 1024));
-		return this.isp.sendLine(`W ${this.address} ${buffer.length}`)
+		return this.isp.sendCommand(`W ${this.address} ${buffer.length}`)
 			.then(() => {
 				return this.uploadChunk(buffer);
 			}).then(() => {
@@ -60,7 +60,7 @@ export class RAMWriter {
 			let index = 0;
 			(function loop() {
 				if (lineCount === RAMWriter.LINES_PER_CHUNK || index >= buffer.length) {
-					isp.sendLine(uue.checksum.toString(), false).then(() => {
+					isp.sendLine(uue.checksum.toString()).then(() => {
 						uue.reset();
 						lineCount = 0;
 						return isp.assertOK();
@@ -75,7 +75,7 @@ export class RAMWriter {
 					});
 				} else { // if (index < buffer.length) {
 					let count = Math.min(RAMWriter.BYTES_PER_LINE, buffer.length - index);
-					isp.sendLine(uue.encode(buffer, index, count), false).then(() => {
+					isp.sendLine(uue.encode(buffer, index, count)).then(() => {
 						index += count;
 						lineCount++;
 						nextTick(loop);

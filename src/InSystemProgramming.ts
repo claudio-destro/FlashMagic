@@ -99,11 +99,10 @@ export class InSystemProgramming {
 	}
 
 	write(data: string): Promise<void> {
-		const s = data.toString();
-		console.info(`<--- ${s}`);
+		console.info(`<--- ${data}`);
 		this.queue.drain(); // XXX
 		return new Promise<void>((resolve, reject) => {
-			this.serialport.write(s + '\r\n', (error: any) => {
+			this.serialport.write(data + '\r\n', (error: any) => {
 				if (error) throw error;
 				this.serialport.drain((error: any) => {
 					if (error) throw error;
@@ -121,19 +120,20 @@ export class InSystemProgramming {
 		});
 	}
 
-	/////////////
-	// HELPERS //
-	/////////////
+	///////////////
+	// UTILITIES //
+	///////////////
 
-	sendLine(data: string, waitSuccess: boolean = true): Promise<string|void> {
+	sendLine(data: string): Promise<string|void> {
 		return this.write(data).then(() => {
 			return this.read().then((ack) => {
 				if (ack !== data) throw new Error(`Not acknowledged: ${JSON.stringify(ack)}`);
-				if (waitSuccess) {
-					return this.assertSuccess();
-				}
 			});
 		});
+	}
+
+	sendCommand(data: string): Promise<string|void> {
+		return this.sendLine(data).then(() => this.assertSuccess());
 	}
 
 	assertSuccess(): Promise<string|void> {
@@ -151,13 +151,17 @@ export class InSystemProgramming {
 	assertOK(): Promise<string|void> {
 		return this.read().then((data) => {
 			if (data !== 'OK') {
-				throw new Error(`Not "OK": "${JSON.stringify(data)}"`);
+				throw new Error(`Not "OK": ${JSON.stringify(data)}`);
 			}
 		});
 	}
 
-	sendUnlockCommand(): Promise<string|void> {
-		return this.sendLine("U 23130");
+	/////////////
+	// HELPERS //
+	/////////////
+
+	sendUnlockCommand(): Promise<string | void> {
+		return this.sendCommand("U 23130");
 	}
 
 }
