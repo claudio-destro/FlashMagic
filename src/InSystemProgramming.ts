@@ -52,7 +52,7 @@ export class InSystemProgramming {
 			parser: com.parsers.readline('\r\n')
 		}, false); // open later
 
-		this.serialport.on('data', (data: string|Buffer) => {
+		this.serialport.on('data', (data: Buffer | String) => {
 			const s = data.toString();
 			console.info(`---> ${s}`);
 			try {
@@ -124,7 +124,7 @@ export class InSystemProgramming {
 	// UTILITIES //
 	///////////////
 
-	sendLine(data: string): Promise<string|void> {
+	sendLine(data: string): Promise<string | void> {
 		return this.write(data).then(() => {
 			return this.read().then((ack) => {
 				if (ack !== data) throw new Error(`Not acknowledged: ${JSON.stringify(ack)}`);
@@ -132,11 +132,11 @@ export class InSystemProgramming {
 		});
 	}
 
-	sendCommand(data: string): Promise<string|void> {
+	sendCommand(data: string): Promise<string | void> {
 		return this.sendLine(data).then(() => this.assertSuccess());
 	}
 
-	assertSuccess(): Promise<string|void> {
+	assertSuccess(): Promise<string | void> {
 		return this.read().then((data) => {
 			if (!(/^\d+$/.test(data))) {
 				throw new TypeError(`Not a number: ${JSON.stringify(data)}`);
@@ -148,7 +148,7 @@ export class InSystemProgramming {
 		});
 	}
 
-	assertOK(): Promise<string|void> {
+	assertOK(): Promise<string | void> {
 		return this.read().then((data) => {
 			if (data !== 'OK') {
 				throw new Error(`Not "OK": ${JSON.stringify(data)}`);

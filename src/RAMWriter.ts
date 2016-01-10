@@ -13,7 +13,7 @@ import * as stream from 'stream';
 
 const _addressSym = Symbol();
 
-function toBuffer(data: Buffer|String): Buffer {
+function toBuffer(data: Buffer | String): Buffer {
 	return Buffer.isBuffer(data) ? <Buffer>data : new Buffer(<string>data, 'binary');
 }
 
@@ -94,6 +94,7 @@ export class RAMWriter {
 
 		const buffer = new Buffer(RAMWriter.alignCount(chunkSize));
 		let offset = 0;
+		buffer.fill(0);
 
 		readable.on('open', () => em.emit('start'));
 
@@ -116,6 +117,7 @@ export class RAMWriter {
 				chunk = chunk.slice(written);
 				if (offset === buffer.length) {
 					offset = 0;
+					buffer.fill(0);
 					em.emit('chunk', buffer);
 					writer.writeBuffer(buffer)
 						.then(proceed)
