@@ -38,34 +38,43 @@ export class LPCProgrammer {
 		let offset;
 		let ended: boolean = false;
 
-		let resetBuffer = () => {
+		let resetBuffer = (): void => {
 			offset = 0;
 			buffer.fill(0);
 			this.uploader.ramAddress = new RAMAddress(this.srcAddr);
 		};
 		resetBuffer();
 
+		let finish = (): void => {
+			if (offset) {
+				em.emit('chunk', buffer.slice(0, offset));
+				this.programBuffer(buffer)
+					.then(() => em.emit('end'))
+					.catch(error => em.emit('error', error));
+			} else {
+				em.emit('end');
+			}
+		};
+
 		readable.on('open', () => em.emit('start'));
 		readable.on('error', () => em.emit('error'));
-		readable.on('end', () => ended = true);
+
+		readable.on('end', () => {
+			ended = readable['isPaused']();
+			if (!ended) { // not paused
+				finish();
+			}
+		});
 
 		readable.on('data', (data: Buffer | String) => {
 			let chunk = toBuffer(data);
 			readable.pause();
 
 			let proceed = (): void => {
-				console.log('CHI T\' MURRT', ended, offset, chunk.length);
-				if (ended) {
-					if (offset) {
-						em.emit('chunk', buffer.slice(0, offset));
-						this.programBuffer(buffer)
-							.then(() => em.emit('end'))
-							.catch(error => em.emit('error', error));
-					} else {
-						em.emit('end');
-					}
-				} else if (chunk.length) {
+				if (chunk.length) {
 					process.nextTick(execute);
+				} else if (ended) {
+					finish();
 				} else {
 					readable.resume();
 				}

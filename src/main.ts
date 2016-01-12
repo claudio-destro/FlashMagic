@@ -14,8 +14,9 @@ let file = process.argv[2];
 let address = parseInt(process.argv[3]);
 let comPort = process.argv[4] || '/dev/tty.usbmodemFD131';
 
-let count = fs.statSync(file).size;
-console.log(`About to flash ${count} bytes...`);
+let size = fs.statSync(file).size;
+console.log(`About to flash ${size} bytes...`);
+let count = 0;
 
 let isp = new InSystemProgramming(comPort);
 isp.open().then(() => {
@@ -27,11 +28,12 @@ isp.open().then(() => {
 	writer.writeFile(f)
 		// .on('start', () => { })
 		.on('error', error => { console.error(error); finished(1); })
-		// .on('chunk', buffer => console.log(`${100 * ~~(buffer.length / count)}%`))
+		.on('chunk', buffer => count += buffer.length)
 		.on('end', () => { finished(); });
 
-	function finished(n?: number) {
+	function finished(n: number = 0) {
 		f.close();
+		console.log(`${count} bytes written`);
 		process.exit(n);
 	}
 });
