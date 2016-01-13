@@ -24,7 +24,10 @@ export class ROMAddress {
 			throw new RangeError(`ROM address 0x${addr.toString(16)} out of range`);
 		}
 		if (sect < 0 || sect > FlashMemory.MAX_SECTOR) {
-
+			throw new RangeError(`ROM sector ${sect} out of range`);
+		}
+		if (FlashMemory.addressToSector(addr) !== sect) {
+			throw new RangeError(`ROM address 0x${addr.toString(16)} / sector ${sect} mismatch`);
 		}
 		this[_addressSym] = addr;
 		this[_sectorSym] = sect;
@@ -47,5 +50,4 @@ export class ROMAddress {
 		let addr = FlashMemory.sectorToAddress(sect);
 		return new ROMAddress(addr, sect);
 	}
-
 }

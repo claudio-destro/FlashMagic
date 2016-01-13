@@ -30,21 +30,21 @@ export function addressToSector(addr: number): number {
 			}
 		}
 	}
-	throw new TypeError(`Bad address 0x${addr.toString(16)}`);
+	throw new RangeError(`ROM address 0x${addr.toString(16)} out of range`);
 }
 
 export function sectorToAddress(sect: number): number {
 	if (sect >= MIN_SECTOR && sect <= MAX_SECTOR) {
 		return SECTOR_ADDRESS[~~sect];
 	}
-	throw new TypeError(`Bad sector ${sect}`);
+	throw new RangeError(`ROM sector ${sect} out of range`);
 }
 
 export function sectorSize(sect: number): number {
 	if (sect >= MIN_SECTOR && sect <= MAX_SECTOR) {
 		return SECTOR_ADDRESS[sect + 1] - SECTOR_ADDRESS[sect];
 	}
-	throw new TypeError(`Bad sector ${sect}`);
+	throw new RangeError(`Bad sector ${sect}`);
 }
 
 // console.log(`Address [0x${MIN_ADDRESS.toString(16)}...0x${MAX_ADDRESS.toString(16)}]

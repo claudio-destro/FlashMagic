@@ -22,11 +22,11 @@ let isp = new InSystemProgramming(comPort);
 isp.open().then(() => {
 	return isp.sendUnlockCommand();
 }).then(() => {
-	let writer = new LPCProgrammer(isp, address);
+	let writer = new LPCProgrammer(isp, address, size);
 	var f: fs.ReadStream = fs.createReadStream(file);
 
-	writer.writeFile(f)
-		// .on('start', () => { })
+	writer.programFile(f)
+		.on('start', () => { })
 		.on('error', error => { console.error(error); finished(1); })
 		.on('chunk', buffer => count += buffer.length)
 		.on('end', () => { finished(); });

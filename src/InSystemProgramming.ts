@@ -77,7 +77,7 @@ export class InSystemProgramming {
 			if (s) {
 				return resolve(s);
 			}
-			((to) => {
+			((to): void => {
 				// Temporary change queue strategy
 				this.queue = {
 					push: (data: string): void => {

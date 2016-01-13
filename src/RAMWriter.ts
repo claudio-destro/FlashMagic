@@ -38,7 +38,7 @@ export class RAMWriter {
 			let isp = this.isp;
 			let lineCount = 0;
 			let index = 0;
-			(function loop() {
+			(function loop(): void {
 				if (lineCount === LINES_PER_CHUNK || index >= buffer.length) {
 					isp.sendLine(uue.checksum.toString()).then(() => {
 						uue.reset();
@@ -50,18 +50,14 @@ export class RAMWriter {
 						} else {
 							resolve();
 						}
-					}).catch((error) => {
-						reject(error);
-					});
+					}).catch(error => reject(error));
 				} else { // if (index < buffer.length) {
 					let count = Math.min(BYTES_PER_LINE, buffer.length - index);
 					isp.sendLine(uue.encode(buffer, index, count)).then(() => {
 						index += count;
 						lineCount++;
 						process.nextTick(loop);
-					}).catch((error) => {
-						reject(error);
-					});
+					}).catch(error => reject(error));
 				}
 			})();
 		});

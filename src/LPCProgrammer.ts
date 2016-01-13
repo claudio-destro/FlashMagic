@@ -3,7 +3,7 @@
 import {InSystemProgramming} from './InSystemProgramming';
 import * as FlashMemory from './FlashMemory';
 import {RAMAddress} from './RAMAddress';
-import {ROMAddress} from './ROMAddress';
+import {ROMBlock} from './ROMBlock';
 import {RAMWriter} from './RAMWriter';
 import {ROMWriter} from './ROMWriter';
 
@@ -11,31 +11,35 @@ import {EventEmitter} from 'events';
 import * as assert from 'assert';
 import * as stream from 'stream';
 
-class Progress extends EventEmitter { }
-
 function toBuffer(data: Buffer | String): Buffer {
 	return Buffer.isBuffer(data) ? <Buffer>data : new Buffer(<string>data, 'binary');
 }
 
-export class LPCProgrammer {
+export class LPCProgrammer extends EventEmitter {
 
 	private uploader: RAMWriter;
 	private flasher: ROMWriter;
 
 	constructor(private isp: InSystemProgramming,
 				private destAddr: number,
+				private length: number,
 				private srcAddr: number = RAMAddress.BASE + 1024 * 10,
 				private chunkSize: number = 1024 * 1) {
+		super();
 		this.uploader = new RAMWriter(isp);
 		this.flasher = new ROMWriter(isp);
-		this.flasher.romAddress = ROMAddress.fromAddress(destAddr);
+		this.flasher.romBlock = ROMBlock.fromAddress(destAddr, length);
 	}
 
-	writeFile(readable: stream.Readable): EventEmitter {
+	programFile(readable: stream.Readable): LPCProgrammer {
+		this.flasher.eraseBlocks().then(() => this.writeFile(readable));
+		return this;
+	}
 
-		const em: EventEmitter = new Progress;
+	private writeFile(readable: stream.Readable): void {
+
 		const buffer = new Buffer(this.chunkSize);
-		let offset;
+		let offset: number;
 		let ended: boolean = false;
 
 		let resetBuffer = (): void => {
@@ -47,20 +51,20 @@ export class LPCProgrammer {
 
 		let finish = (): void => {
 			if (offset) {
-				em.emit('chunk', buffer.slice(0, offset));
+				this.emit('chunk', buffer.slice(0, offset));
 				this.programBuffer(buffer)
-					.then(() => em.emit('end'))
-					.catch(error => em.emit('error', error));
+					.then(() => this.emit('end'))
+					.catch(error => this.emit('error', error));
 			} else {
-				em.emit('end');
+				this.emit('end');
 			}
 		};
 
-		readable.on('open', () => em.emit('start'));
-		readable.on('error', () => em.emit('error'));
+		readable.on('open', () => this.emit('start'));
+		readable.on('error', () => this.emit('error'));
 
 		readable.on('end', () => {
-			ended = readable['isPaused']();
+			ended = readable['isPaused'](); // tsd not yet updated
 			if (!ended) { // not paused
 				finish();
 			}
@@ -70,9 +74,9 @@ export class LPCProgrammer {
 			let chunk = toBuffer(data);
 			readable.pause();
 
-			let proceed = (): void => {
+			function next(): void {
 				if (chunk.length) {
-					process.nextTick(execute);
+					process.nextTick(loop);
 				} else if (ended) {
 					finish();
 				} else {
@@ -80,25 +84,24 @@ export class LPCProgrammer {
 				}
 			}
 
-			let execute = (): void => {
+			let loop = (): void => {
 				let written = Math.min(buffer.length - offset, chunk.length);
 				chunk.copy(buffer, offset, 0, written);
 				offset += written;
 				chunk = chunk.slice(written);
 				if (offset === buffer.length) {
-					em.emit('chunk', buffer);
+					this.emit('chunk', buffer);
 					this.programBuffer(buffer)
 						.then(resetBuffer)
-						.then(proceed)
-						.catch(error => em.emit('error', error));
+						.then(next)
+						.catch(error => this.emit('error', error));
 				} else {
-					proceed();
+					next();
 				}
 			};
-			execute(); // start
-		});
 
-		return em;
+			loop();
+		});
 	}
 
 	private programBuffer(buffer: Buffer): Promise<void> {
