@@ -5,36 +5,49 @@ import {LPCProgrammer} from './LPCProgrammer';
 
 import * as fs from 'fs';
 
-process.on('uncaughtException', (uncaught) => {
-	console.error(uncaught.stack);
-	process.exit(1);
-});
+class Programmer {
+
+	constructor(private isp: InSystemProgramming) { }
+
+	programFile(path: string, addr: number): Promise<void> {
+		let stream = fs.createReadStream(file);
+		return this.isp.open()
+			.then(() => {
+				return this.isp.sendUnlockCommand();
+			})
+			.then(() => {
+				let size = fs.statSync(file).size;
+				let count = 0;
+				let programmer = new LPCProgrammer(this.isp, address, size);
+				return new Promise<void>((resolve, reject) => {
+					programmer.program(stream)
+						.on('start', () => console.log(`About to flash ${size} bytes...`))
+						.on('error', error => { console.error(error); finished(1); })
+						.on('chunk', buffer => count += buffer.length)
+						.on('end', finished);
+
+					function finished(n: number = 0): void {
+						console.log(`${count} bytes written.`);
+						if (n) reject(); else resolve();
+					}
+				});
+			})
+			.then(() => {
+				stream.close();
+				return this.isp.close();
+			})
+			.catch(error => {
+				console.error(error);
+				stream.close();
+				this.isp.close();
+			});
+	}
+}
+
 
 let file = process.argv[2];
 let address = parseInt(process.argv[3]);
 let comPort = process.argv[4] || '/dev/tty.usbmodemFD131';
 
-let size = fs.statSync(file).size;
-console.log(`About to flash ${size} bytes...`);
-let count = 0;
-
-let isp = new InSystemProgramming(comPort);
-isp.open().then(() => {
-	return isp.sendUnlockCommand();
-}).then(() => {
-	let writer = new LPCProgrammer(isp, address, size);
-	var f: fs.ReadStream = fs.createReadStream(file);
-
-	writer.programFile(f)
-		.on('start', () => { })
-		.on('error', error => { console.error(error); finished(1); })
-		.on('chunk', buffer => count += buffer.length)
-		.on('end', () => { finished(); });
-
-	function finished(n: number = 0) {
-		f.close();
-		console.log(`${count} bytes written`);
-		process.exit(n);
-	}
-});
-
+let p = new Programmer(new InSystemProgramming(comPort));
+p.programFile(file, address);

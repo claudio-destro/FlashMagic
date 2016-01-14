@@ -14,25 +14,23 @@ const _addressSym = Symbol();
 
 export class RAMWriter {
 
-	set ramAddress(address: RAMAddress) { this[_addressSym] = address; }
-	get ramAddress(): RAMAddress { return this[_addressSym]; }
-
-	get address(): number { return this.ramAddress.address; }
+	set address(address: RAMAddress) { this[_addressSym] = address; }
+	get address(): RAMAddress { return this[_addressSym]; }
 
 	constructor(private isp: InSystemProgramming) { }
 
-	writeBuffer(buffer: Buffer): Promise<void> {
+	uploadBuffer(buffer: Buffer): Promise<void> {
 		return this.isp.sendCommand(`W ${this.address} ${buffer.length}`)
 			.then(() => {
-				return this.uploadChunk(buffer);
+				return this.doUploadChunk(buffer);
 			}).then(() => {
 				return this.isp.assertSuccess();
 			}).then(() => {
-				this.ramAddress = this.ramAddress.increment(buffer.length);
+				this.address = this.address.increment(buffer.length);
 			});
 	}
 
-	private uploadChunk(buffer: Buffer): Promise<void> {
+	private doUploadChunk(buffer: Buffer): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
 			let uue = new UUEncoder();
 			let isp = this.isp;

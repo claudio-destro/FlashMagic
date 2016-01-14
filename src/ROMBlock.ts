@@ -14,6 +14,9 @@ export class ROMBlock {
 	get size(): number { return this[_sizeSym]; }
 
 	constructor(addr: ROMAddress, size: number) {
+		if (size <= 0) {
+			throw new RangeError(`ROM block size ${size} must be > 0`);
+		}
 		let n = addr.address;
 		let m = n + size - 1;
 		if (m > FlashMemory.MAX_ADDRESS) {
@@ -25,6 +28,10 @@ export class ROMBlock {
 
 	increment(diff: number): ROMBlock {
 		return ROMBlock.fromAddress(this.address + diff, this.size - diff);
+	}
+
+	containsAddress(addr: number | ROMAddress): boolean {
+		return this.address <= addr && addr < this.address + this.size;
 	}
 
 	// toString(): string {

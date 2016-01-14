@@ -18,25 +18,24 @@ function toBuffer(data: Buffer | String): Buffer {
 export class LPCProgrammer extends EventEmitter {
 
 	private uploader: RAMWriter;
-	private flasher: ROMWriter;
+	private writer: ROMWriter;
 
 	constructor(private isp: InSystemProgramming,
-				private destAddr: number,
-				private length: number,
-				private srcAddr: number = RAMAddress.BASE + 1024 * 10,
-				private chunkSize: number = 1024 * 1) {
+		private destAddr: number,
+		private length: number,
+		private srcAddr: number = RAMAddress.BASE + 1024 * 10,
+		private chunkSize: number = 1024 * 1) {
 		super();
 		this.uploader = new RAMWriter(isp);
-		this.flasher = new ROMWriter(isp);
-		this.flasher.romBlock = ROMBlock.fromAddress(destAddr, length);
+		this.writer = new ROMWriter(isp, destAddr, length);
 	}
 
-	programFile(readable: stream.Readable): LPCProgrammer {
-		this.flasher.eraseBlocks().then(() => this.writeFile(readable));
+	program(readable: stream.Readable): LPCProgrammer {
+		this.writer.eraseBlock().then(() => this.doProgram(readable));
 		return this;
 	}
 
-	private writeFile(readable: stream.Readable): void {
+	private doProgram(readable: stream.Readable): void {
 
 		const buffer = new Buffer(this.chunkSize);
 		let offset: number;
@@ -45,7 +44,7 @@ export class LPCProgrammer extends EventEmitter {
 		let resetBuffer = (): void => {
 			offset = 0;
 			buffer.fill(0);
-			this.uploader.ramAddress = new RAMAddress(this.srcAddr);
+			this.uploader.address = new RAMAddress(this.srcAddr);
 		};
 		resetBuffer();
 
@@ -105,10 +104,10 @@ export class LPCProgrammer extends EventEmitter {
 	}
 
 	private programBuffer(buffer: Buffer): Promise<void> {
-		let ramAddr = this.uploader.ramAddress;
-		return this.uploader.writeBuffer(buffer)
+		let ramAddr = this.uploader.address;
+		return this.uploader.uploadBuffer(buffer)
 			.then(() => {
-				return this.flasher.copyBlock(ramAddr, buffer.length);
+				return this.writer.copyBlock(ramAddr, buffer.length);
 			});
 	}
 }

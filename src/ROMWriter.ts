@@ -10,16 +10,20 @@ const _blockSym = Symbol();
 
 export class ROMWriter {
 
-	set romBlock(block: ROMBlock) { this[_blockSym] = block; }
-	get romBlock(): ROMBlock { return this[_blockSym]; }
+	set block(block: ROMBlock) { this[_blockSym] = block; }
+	get block(): ROMBlock { return this[_blockSym]; }
 
-	get address(): number { return this.romBlock.address; }
-	get sector(): number { return this.romBlock.sector; }
-	get size(): number { return this.romBlock.size; }
+	get address(): number { return this.block.address; }
+	get sector(): number { return this.block.sector; }
+	get size(): number { return this.block.size; }
 
-	constructor(private isp: InSystemProgramming) { }
+	constructor(private isp: InSystemProgramming, addr?: number, size?: number) {
+		if (addr && size) {
+			this[_blockSym] = ROMBlock.fromAddress(addr, size);
+		}
+	}
 
-	eraseBlocks(): Promise<void> {
+	eraseBlock(): Promise<void> {
 		const endSect = FlashMemory.addressToSector(this.address + this.size - 1);
 		return this.isp.sendUnlockCommand()
 			.then(() => {
@@ -37,7 +41,7 @@ export class ROMWriter {
 			}).then(() => {
 				return this.isp.sendCommand(`C ${this.address} ${srcAddr} ${count}`);
 			}).then(() => {
-				this.romBlock = this.romBlock.increment(count);
+				this.block = this.block.increment(count);
 			});
 	}
 
