@@ -8,8 +8,7 @@ import {RAMWriter} from './RAMWriter';
 import {ROMWriter} from './ROMWriter';
 
 import {EventEmitter} from 'events';
-import * as assert from 'assert';
-import * as stream from 'stream';
+import {Readable} from 'stream';
 
 function toBuffer(data: Buffer | String): Buffer {
 	return Buffer.isBuffer(data) ? <Buffer>data : new Buffer(<string>data, 'binary');
@@ -30,16 +29,17 @@ export class LPCProgrammer extends EventEmitter {
 		this.writer = new ROMWriter(isp, destAddr, length);
 	}
 
-	program(readable: stream.Readable): LPCProgrammer {
+	program(readable: Readable): LPCProgrammer {
 		this.writer.eraseBlock().then(() => this.doProgram(readable));
 		return this;
 	}
 
-	private doProgram(readable: stream.Readable): void {
+	private doProgram(readable: Readable): void {
 
 		const buffer = new Buffer(this.chunkSize);
 		let offset: number;
 		let ended: boolean = false;
+		let startEmitted: boolean = false;
 
 		let resetBuffer = (): void => {
 			offset = 0;
@@ -48,10 +48,18 @@ export class LPCProgrammer extends EventEmitter {
 		};
 		resetBuffer();
 
+		let emitStart = () => {
+			if (!startEmitted) {
+				startEmitted = true;
+				this.emit('start');
+			}
+		};
+
 		let finish = (): void => {
+			emitStart();
 			if (offset) {
 				this.emit('chunk', buffer.slice(0, offset));
-				this.programBuffer(buffer)
+				this.doProgramBuffer(buffer)
 					.then(() => this.emit('end'))
 					.catch(error => this.emit('error', error));
 			} else {
@@ -59,7 +67,7 @@ export class LPCProgrammer extends EventEmitter {
 			}
 		};
 
-		readable.on('open', () => this.emit('start'));
+		readable.on('open', () => emitStart());
 		readable.on('error', () => this.emit('error'));
 
 		readable.on('end', () => {
@@ -89,8 +97,9 @@ export class LPCProgrammer extends EventEmitter {
 				offset += written;
 				chunk = chunk.slice(written);
 				if (offset === buffer.length) {
+					emitStart();
 					this.emit('chunk', buffer);
-					this.programBuffer(buffer)
+					this.doProgramBuffer(buffer)
 						.then(resetBuffer)
 						.then(next)
 						.catch(error => this.emit('error', error));
@@ -103,11 +112,11 @@ export class LPCProgrammer extends EventEmitter {
 		});
 	}
 
-	private programBuffer(buffer: Buffer): Promise<void> {
+	private doProgramBuffer(buffer: Buffer): Promise<ROMWriter> {
 		let ramAddr = this.uploader.address;
-		return this.uploader.uploadBuffer(buffer)
+		return this.uploader.writeToRAM(buffer)
 			.then(() => {
-				return this.writer.copyBlock(ramAddr, buffer.length);
+				return this.writer.copyRAMToFlash(ramAddr, buffer.length);
 			});
 	}
 }

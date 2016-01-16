@@ -23,17 +23,19 @@ export class ROMWriter {
 		}
 	}
 
-	eraseBlock(): Promise<void> {
+	eraseBlock(): Promise<ROMWriter> {
 		const endSect = FlashMemory.addressToSector(this.address + this.size - 1);
 		return this.isp.sendUnlockCommand()
 			.then(() => {
 				return this.isp.sendCommand(`P ${this.sector} ${endSect}`);
 			}).then(() => {
 				return this.isp.sendCommand(`E ${this.sector} ${endSect}`);
+			}).then(() => {
+				return this;
 			});
 	}
 
-	copyBlock(srcAddr: RAMAddress, count: number): Promise<void> {
+	copyRAMToFlash(srcAddr: RAMAddress, count: number): Promise<ROMWriter> {
 		const endSect = FlashMemory.addressToSector(this.address + count - 1);
 		return this.isp.sendUnlockCommand()
 			.then(() => {
@@ -42,6 +44,7 @@ export class ROMWriter {
 				return this.isp.sendCommand(`C ${this.address} ${srcAddr} ${count}`);
 			}).then(() => {
 				this.block = this.block.increment(count);
+				return this;
 			});
 	}
 

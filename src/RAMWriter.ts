@@ -19,18 +19,19 @@ export class RAMWriter {
 
 	constructor(private isp: InSystemProgramming) { }
 
-	uploadBuffer(buffer: Buffer): Promise<void> {
+	writeToRAM(buffer: Buffer): Promise<RAMWriter> {
 		return this.isp.sendCommand(`W ${this.address} ${buffer.length}`)
 			.then(() => {
-				return this.doUploadChunk(buffer);
+				return this.uploadChunk(buffer);
 			}).then(() => {
 				return this.isp.assertSuccess();
 			}).then(() => {
 				this.address = this.address.increment(buffer.length);
+				return this;
 			});
 	}
 
-	private doUploadChunk(buffer: Buffer): Promise<void> {
+	private uploadChunk(buffer: Buffer): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
 			let uue = new UUEncoder();
 			let isp = this.isp;
