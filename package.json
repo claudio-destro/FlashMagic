@@ -1,6 +1,6 @@
 {
   "name": "flashmagic.js",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "NXP LPC Microprocessor Programmer",
   "author": "Claudio Destro <c.destro@vlabsistemi.com>",
   "dependencies": {
@@ -31,6 +31,6 @@
     "lpc"
   ],
   "scripts": {
-      "prepublish": "tsc -d"
+    "prepublish": "tsc -d"
   }
 }
