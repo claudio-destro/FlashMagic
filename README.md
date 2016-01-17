@@ -4,6 +4,16 @@ A library for programming flash based microcontrollers from [NXP](http://www.nxp
 
 It implements a function similar to [Flash Magic](http://www.flashmagictool.com) but using [Node.js](https://github.com/nodejs/node), [TypeScript](https://github.com/microsoft/typescript) and [node-serialport](https://github.com/voodootikigod/node-serialport) instead.
 
+## Note
+
+I usually have `./node_modules/.bin` in my `PATH` so I have to execute the following commands to perform a clean build:
+
+```bash
+# npm install
+# tsd install
+# tsc -d
+```
+
 ## Disclaimer
 
 This tool is **NOT** related to [Flash Magic](http://www.flashmagictool.com).
