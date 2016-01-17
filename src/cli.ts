@@ -1,4 +1,3 @@
-import * as gino from './index';
 import {InSystemProgramming} from "./InSystemProgramming";
 import {LPCProgrammer} from './LPCProgrammer';
 
