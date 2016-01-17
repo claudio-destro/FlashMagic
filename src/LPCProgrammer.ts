@@ -1,5 +1,3 @@
-'use strict';
-
 import {InSystemProgramming} from './InSystemProgramming';
 import * as FlashMemory from './FlashMemory';
 import {RAMAddress} from './RAMAddress';

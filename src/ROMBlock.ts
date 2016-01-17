@@ -1,4 +1,3 @@
-'use strict';
 var Symbol = require('es6-symbol');
 
 import * as FlashMemory from './FlashMemory';
@@ -14,10 +13,10 @@ export class ROMBlock {
 	get size(): number { return this[_sizeSym]; }
 
 	constructor(addr: ROMAddress, size: number) {
-		if (size <= 0) {
-			throw new RangeError(`ROM block size ${size} must be > 0`);
-		}
 		let n = addr.address;
+		if (size < 0) {
+			throw new RangeError(`ROM block size ${size} must be >= 0`);
+		}
 		let m = n + size - 1;
 		if (m > FlashMemory.MAX_ADDRESS) {
 			throw new RangeError(`ROM block [0x${n.toString(16)}...0x${m.toString(16)}] out of address space`);

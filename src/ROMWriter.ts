@@ -1,4 +1,3 @@
-'use strict';
 var Symbol = require('es6-symbol');
 
 import {InSystemProgramming} from './InSystemProgramming';
@@ -43,7 +42,7 @@ export class ROMWriter {
 			}).then(() => {
 				return this.isp.sendCommand(`C ${this.address} ${srcAddr} ${count}`);
 			}).then(() => {
-				this.block = this.block.increment(count);
+				this.block = this.block.increment(Math.min(count, this.size));
 				return this;
 			});
 	}

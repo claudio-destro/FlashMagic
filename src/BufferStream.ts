@@ -1,10 +1,8 @@
-'use strict';
-
 // http://www.bennadel.com/blog/2681-turning-buffers-into-readable-streams-in-node-js.htm
 
-import * as stream from 'stream';
+import {Readable} from 'stream';
 
-export class BufferStream extends stream.Readable {
+export class BufferStream extends Readable {
 
     private offset: number = 0;
 

@@ -1,4 +1,3 @@
-'use strict';
 var com = require('serialport');
 
 const ERRORS: Array<string> = [
@@ -54,7 +53,7 @@ export class InSystemProgramming {
 
 		this.serialport.on('data', (data: Buffer | String) => {
 			const s = data.toString();
-			// console.log(`---> ${s}`);
+			console.log(`---> ${s}`);
 			try {
 				this.queue.push(s);
 			} finally {
@@ -99,7 +98,7 @@ export class InSystemProgramming {
 	}
 
 	write(data: string): Promise<InSystemProgramming> {
-		// console.log(`<--- ${data}`);
+		console.log(`<--- ${data}`);
 		this.queue.drain(); // XXX
 		return new Promise<InSystemProgramming>((resolve, reject) => {
 			this.serialport.write(data + '\r\n', (error: any) => {

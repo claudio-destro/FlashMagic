@@ -1,4 +1,3 @@
-'use strict';
 var Symbol = require('es6-symbol');
 
 import {InSystemProgramming} from './InSystemProgramming';

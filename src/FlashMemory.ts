@@ -1,5 +1,3 @@
-'use strict';
-
 const SECTOR_ADDRESS = new Uint32Array([
 	// 4KB [0...7]
 	0x00000000, 0x00001000, 0x00002000, 0x00003000,
