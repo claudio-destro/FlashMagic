@@ -6,7 +6,7 @@ It implements a function similar to [Flash Magic](http://www.flashmagictool.com)
 
 ## Usage
 
-Please, refer to `cli.js` for more information about usage.
+Please, refer to [cli.ts](https://github.com/claudio-destro/flashmagic.js/blob/master/src/cli.ts) for more information about usage.
 
 ## Note
 
