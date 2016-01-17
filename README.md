@@ -6,4 +6,5 @@ It implements a function similar to [Flash Magic](http://www.flashmagictool.com)
 
 ## Disclaimer
 
-This tool is *NOT* related to _Flash Magic_: its primary objective is just to communicate with a custom USB bootloader by using a well-known protocol.
+This tool is *NOT* related to [Flash Magic](http://www.flashmagictool.com).
+Its primary objective is just to communicate with a custom USB bootloader by using a well-known protocol.
