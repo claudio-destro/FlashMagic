@@ -18,15 +18,16 @@ export class ROMBlock {
 			throw new RangeError(`ROM block size ${size} must be >= 0`);
 		}
 		let m = n + size - 1;
-		if (m > FlashMemory.MAX_ADDRESS) {
+		if (m > FlashMemory.MAX_ROM_ADDRESS) {
 			throw new RangeError(`ROM block [0x${n.toString(16)}...0x${m.toString(16)}] out of address space`);
 		}
 		this[_addressSym] = addr;
 		this[_sizeSym] = size;
 	}
 
-	increment(diff: number): ROMBlock {
-		return ROMBlock.fromAddress(this.address + diff, this.size - diff);
+	adjust(diff: number): ROMBlock {
+		let size = Math.max(0, this.size - diff);
+		return ROMBlock.fromAddress(this.address + diff, size);
 	}
 
 	containsAddress(addr: number | ROMAddress): boolean {

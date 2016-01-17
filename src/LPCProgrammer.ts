@@ -113,8 +113,6 @@ export class LPCProgrammer extends EventEmitter {
 	private doProgramBuffer(buffer: Buffer): Promise<ROMWriter> {
 		let ramAddr = this.uploader.address;
 		return this.uploader.writeToRAM(buffer)
-			.then(() => {
-				return this.writer.copyRAMToFlash(ramAddr, buffer.length);
-			});
+			.then(() => this.writer.copyRAMToFlash(ramAddr, buffer.length));
 	}
 }

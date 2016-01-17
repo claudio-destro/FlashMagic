@@ -17,11 +17,11 @@ const SECTOR_ADDRESS = new Uint32Array([
 export const MIN_SECTOR = 2;
 export const MAX_SECTOR = SECTOR_ADDRESS.length - 2;
 
-export const MIN_ADDRESS = SECTOR_ADDRESS[MIN_SECTOR];
-export const MAX_ADDRESS = SECTOR_ADDRESS[MAX_SECTOR + 1] - 1;
+export const MIN_ROM_ADDRESS = SECTOR_ADDRESS[MIN_SECTOR];
+export const MAX_ROM_ADDRESS = SECTOR_ADDRESS[MAX_SECTOR + 1] - 1;
 
 export function addressToSector(addr: number): number {
-	if (addr >= MIN_ADDRESS) {
+	if (addr >= MIN_ROM_ADDRESS) {
 		for (let i = MIN_SECTOR; i <= MAX_SECTOR; i++) {
 			if (addr < SECTOR_ADDRESS[i + 1]) {
 				return i;

@@ -41,10 +41,16 @@ export class ROMWriter {
 				return this.isp.sendCommand(`P ${this.sector} ${endSect}`);
 			}).then(() => {
 				return this.isp.sendCommand(`C ${this.address} ${srcAddr} ${count}`);
-			}).then(() => {
-				this.block = this.block.increment(Math.min(count, this.size));
+			}).then(() => {;
+				this.block = this.increment(count);
 				return this;
 			});
 	}
 
+	// adjust block avoiding overflows and misalignments
+	private increment(count: number): ROMBlock {
+		// count = Math.min(count, this.size);
+		count = (count & 3) === 0 ? count : 4 + (count & ~3);
+		return this.block.adjust(count);
+	}
 }

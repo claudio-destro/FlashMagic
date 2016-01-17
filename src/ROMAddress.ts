@@ -8,7 +8,7 @@ const _sectorSym = Symbol();
 export class ROMAddress {
 
 	static get BASE() { return 0; }
-	static get SIZE() { return FlashMemory.MAX_ADDRESS + 1; } // 504 KB
+	static get SIZE() { return FlashMemory.MAX_ROM_ADDRESS + 1; } // 504 KB
 
 	get address(): number { return this[_addressSym]; }
 	get sector(): number { return this[_sectorSym]; }
