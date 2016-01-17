@@ -1,6 +1,6 @@
 {
   "name": "flashmagic.js",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "NXP LPC Microprocessor Programmer",
   "author": "Claudio Destro <c.destro@vlabsistemi.com>",
   "dependencies": {
@@ -15,6 +15,13 @@
   "main": "lib/index.js",
   "bin": {
     "flashmagic": "bin/flashmagic.js"
+  },
+  "bugs": {
+    "url": "https://github.com/claudio-destro/flashmagic.js/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/claudio-destro/flashmagic.js.git"
   },
   "keywords": [
     "typescript",
