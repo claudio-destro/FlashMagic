@@ -6,9 +6,10 @@ It implements a function similar to [Flash Magic](http://www.flashmagictool.com)
 
 ## Note
 
-I usually have `./node_modules/.bin` in my `PATH` so I have to execute just the following commands to perform a clean build:
+I usually have `./node_modules/.bin` in my `PATH` so I just have to execute the following commands to perform a clean build:
 
 ```bash
+# rm -fr lib/ node_modules/ typings/
 # npm install
 # tsd install
 # tsc -d
