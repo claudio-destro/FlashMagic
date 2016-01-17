@@ -29,5 +29,8 @@
     "serialport",
     "nxp",
     "lpc"
-  ]
+  ],
+  "scripts": {
+      "prepublish": "tsc -d"
+  }
 }
