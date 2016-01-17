@@ -65,7 +65,7 @@ export class LPCProgrammer extends EventEmitter {
 			}
 		};
 
-		readable.on('open', () => emitStart());
+		readable.on('open', emitStart);
 		readable.on('error', () => this.emit('error'));
 
 		readable.on('end', () => {
