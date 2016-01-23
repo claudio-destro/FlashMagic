@@ -24,7 +24,7 @@ export class ROMWriter {
 
 	eraseBlock(): Promise<ROMWriter> {
 		const endSect = FlashMemory.addressToSector(this.address + this.size - 1);
-		return this.isp.sendUnlockCommand()
+		return this.isp.unlock()
 			.then(() => {
 				return this.isp.sendCommand(`P ${this.sector} ${endSect}`);
 			}).then(() => {
@@ -36,7 +36,7 @@ export class ROMWriter {
 
 	copyRAMToFlash(srcAddr: RAMAddress, count: number): Promise<ROMWriter> {
 		const endSect = FlashMemory.addressToSector(this.address + count - 1);
-		return this.isp.sendUnlockCommand()
+		return this.isp.unlock()
 			.then(() => {
 				return this.isp.sendCommand(`P ${this.sector} ${endSect}`);
 			}).then(() => {

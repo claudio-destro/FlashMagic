@@ -41,7 +41,7 @@ export class RAMWriter {
 					isp.sendLine(uue.checksum.toString()).then(() => {
 						uue.reset();
 						lineCount = 0;
-						return isp.assertOK();
+						return isp.assert('OK');
 					}).then(() => {
 						if (index < buffer.length) {
 							process.nextTick(loop);

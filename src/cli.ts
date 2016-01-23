@@ -1,5 +1,6 @@
 import {InSystemProgramming} from "./InSystemProgramming";
 import {LPCProgrammer} from './LPCProgrammer';
+import * as Handshake from "./Handshake";
 
 import * as program from 'commander';
 import * as path from 'path';
@@ -8,7 +9,7 @@ import * as fs from 'fs';
 var defaultComPort = '/dev/tty.usbmodemFD131';
 
 program
-  .option('-p, --port [port]', `serial port [${defaultComPort}]`, defaultComPort);
+  .option('-P, --port [port]', `serial port [${defaultComPort}]`, defaultComPort);
 
 program.command('flash <file>')
   .description('program file')
@@ -22,9 +23,17 @@ program.command('flash <file>')
 program.command('ping')
   .description('ping device')
   .action(() => {
-    InSystemProgramming.makeAndOpen(program['port'])
+    Handshake.open(program['port'])
       .then((isp) => pingDevice(isp))
       .catch(catchError);
+  });
+
+program.command('handshake')
+  .description('hardware handshake')
+  .action(() => {
+    Handshake.open(program['port'])
+        .then(isp => isp.close())
+        .catch(catchError);
   });
 
 program.parse(process.argv);
@@ -34,7 +43,7 @@ if (program.args.length === 0) {
 }
 
 function programFile(isp: InSystemProgramming, path: string, address: number): Promise<void> {
-  return isp.sendUnlockCommand().then(() => {
+  return isp.unlock().then(() => {
     let size = fs.statSync(path).size;
     let count = 0;
     let programmer = new LPCProgrammer(isp, address, size);
@@ -57,7 +66,7 @@ function pingDevice(isp: InSystemProgramming): void {
   let count = 0;
   (function loop(): void {
     let start = Date.now();
-    isp.sendUnlockCommand().then(() => {
+    isp.unlock().then(() => {
       console.log(`PING seq=${count++} time=${Date.now() - start} ms`);
       setTimeout(loop, 1000);
     }).catch(error => {
