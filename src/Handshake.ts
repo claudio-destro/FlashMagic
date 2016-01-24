@@ -32,7 +32,7 @@ function handshake(isp: InSystemProgramming, frequency: number, count: number): 
   });
 }
 
-export function open(path: string, baud: number = 9600, frequency: number = 12000000): Promise<InSystemProgramming> {
+export function open(path: string, baud: number = 115200, frequency: number = 12000000): Promise<InSystemProgramming> {
 	return new InSystemProgramming(path, baud)
       .open()
       .then(isp => handshake(isp, frequency / 1000, 1000));
