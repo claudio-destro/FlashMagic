@@ -15,7 +15,7 @@ program.command('flash <file>')
   .description('program file')
   .option('-A, --address <address>', 'flash address', parseInt)
   .action((file, cmd) => {
-    InSystemProgramming.makeAndOpen(program['port'])
+    Handshake.open(program['port'])
       .then((isp) => programFile(isp, file, cmd.address).then(() => isp.close()))
       .catch(catchError);
   });
