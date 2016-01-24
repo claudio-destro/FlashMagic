@@ -17,7 +17,7 @@ export class ROMWriter {
 	get size(): number { return this.block.size; }
 
 	constructor(private isp: InSystemProgramming, addr?: number, size?: number) {
-		if (addr && size) {
+		if ((addr !== void 0) && size) {
 			this[_blockSym] = ROMBlock.fromAddress(addr, size);
 		}
 	}

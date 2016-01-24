@@ -184,6 +184,14 @@ export class InSystemProgramming {
         .then(() => this.open());
   }
 
+  readPartIdentification(): Promise<string> {
+    return this.sendCommand('J').then(() => this.read());
+  }
+
+  readBootcodeVersion(): Promise<string> {
+    return this.sendCommand('K').then(() => this.read());
+  }
+
 	static makeAndOpen(path: string, baud: number = 115200): Promise<InSystemProgramming> {
 		return new InSystemProgramming(path, baud).open();
 	}

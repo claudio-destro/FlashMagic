@@ -1,6 +1,7 @@
 import {InSystemProgramming} from "./InSystemProgramming";
 import {LPCProgrammer} from './LPCProgrammer';
 import * as Handshake from "./Handshake";
+import {PART_IDENTIFICATIONS} from './PartIdentifications';
 
 import * as program from 'commander';
 import * as path from 'path';
@@ -16,7 +17,11 @@ program.command('flash <file>')
   .option('-A, --address <address>', 'flash address', parseInt)
   .action((file, cmd) => {
     Handshake.open(program['port'])
-      .then((isp) => programFile(isp, file, cmd.address).then(() => isp.close()))
+      .then((isp) => {
+        return programFile(isp, file, cmd.address)
+            .then(() => isp.close())
+            .then(() => process.exit(0))
+      })
       .catch(catchError);
   });
 
@@ -26,14 +31,6 @@ program.command('ping')
     Handshake.open(program['port'])
       .then((isp) => pingDevice(isp))
       .catch(catchError);
-  });
-
-program.command('handshake')
-  .description('hardware handshake')
-  .action(() => {
-    Handshake.open(program['port'])
-        .then(isp => isp.close())
-        .catch(catchError);
   });
 
 program.parse(process.argv);
@@ -66,8 +63,8 @@ function pingDevice(isp: InSystemProgramming): void {
   let count = 0;
   (function loop(): void {
     let start = Date.now();
-    isp.unlock().then(() => {
-      console.log(`PING seq=${count++} time=${Date.now() - start} ms`);
+    isp.readPartIdentification().then(partId => {
+      console.log(`LPC${PART_IDENTIFICATIONS[partId] || partId} seq=${count++} time=${Date.now() - start} ms`);
       setTimeout(loop, 1000);
     }).catch(error => {
       console.error(error);

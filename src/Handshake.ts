@@ -1,6 +1,7 @@
 import {InSystemProgramming} from './InSystemProgramming';
 
 const SYNCHRONIZED = 'Synchronized';
+const SYNC_REGEXP = new RegExp(`^\\?*${SYNCHRONIZED}`);
 
 function handshake(isp: InSystemProgramming, frequency: number, count: number): Promise<InSystemProgramming> {
   let freq = frequency.toString(10);
@@ -9,7 +10,7 @@ function handshake(isp: InSystemProgramming, frequency: number, count: number): 
       isp.write('?')
         .then(() => isp.read(20))
         .then(ack => {
-          if (ack !== SYNCHRONIZED) {
+          if (!ack.match(SYNC_REGEXP)) {
             throw new RangeError('Not synchronized');
           }
           return isp.writeln(SYNCHRONIZED);
@@ -35,7 +36,7 @@ function handshake(isp: InSystemProgramming, frequency: number, count: number): 
 export function open(path: string, baud: number = 115200, frequency: number = 12000000): Promise<InSystemProgramming> {
 	return new InSystemProgramming(path, baud)
       .open()
-      .then(isp => handshake(isp, frequency / 1000, 1000));
+      .then(isp => handshake(isp, frequency / 1000, Infinity));
       //.then(isp => isp.setBaudRate(baud))
       //.then(isp => isp.unlock());
 }
