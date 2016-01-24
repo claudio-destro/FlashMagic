@@ -22,6 +22,7 @@ export class RAMWriter {
     let ret: Promise<any> = this.isp.sendCommand(`W ${this.address} ${buffer.length}`)
         .then(() => this.uploadChunk(buffer));
     if (process.env['IAP'] === 'custom') {
+      // XXX our bootloader sends CMD_SUCCESS after a write ;(
       ret = ret.then(() => this.isp.assertSuccess());
     }
     return ret.then(() => {
