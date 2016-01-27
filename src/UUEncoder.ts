@@ -51,13 +51,3 @@ function encodeTriple(a: number, b: number, c: number): string {
 	       encodeSingle(((b << 2) & 0x3C) | ((c >>> 6) & 0x03)) +
 	       encodeSingle(c & 0x3F);
 }
-
-/*
-let enc = new UUEncoder();
-for (let n = 1; n <= 45; n++) {
-  let b = new Buffer(n);
-  b.fill(0);
-  console.log(n + '\t' + enc.encode(b, 0, n));
-  enc.reset();
-}
-*/

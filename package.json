@@ -4,6 +4,7 @@
   "description": "NXP LPC Microprocessor Programmer",
   "author": "Claudio Destro <c.destro@vlabsistemi.com>",
   "dependencies": {
+    "buffer-hexdump": "^1.0.0",
     "commander": "^2.9.0",
     "es6-symbol": "^3.0.2",
     "serialport": "^2.0.5"

@@ -46,6 +46,8 @@ export class InSystemProgramming {
 
 	private queue: DataQueue<string> = LINE_QUEUE;
 
+  private echo: boolean = true;
+
 	constructor(private path: string, baud: number = 115200) {
     this.reinitialize(baud, 1);
   }
@@ -135,12 +137,16 @@ export class InSystemProgramming {
 	///////////////
 
 	sendLine(data: string): Promise<InSystemProgramming> {
-		return this.writeln(data).then(() => {
-			return this.read();
-		}).then((ack) => {
-			if (ack !== data) throw new Error(`Not acknowledged: ${JSON.stringify(ack)}`);
-			return this;
-		});
+    let p = this.writeln(data);
+    if (this.echo) {
+      p = p.then(() => {
+        return this.read();
+      }).then((ack) => {
+        if (ack !== data) throw new Error(`Not acknowledged: ${JSON.stringify(ack)}`);
+        return this;
+      });
+    }
+    return p;
 	}
 
 	sendCommand(data: string): Promise<InSystemProgramming> {
@@ -176,6 +182,14 @@ export class InSystemProgramming {
 	unlock(): Promise<InSystemProgramming> {
 		return this.sendCommand(`U ${UNLOCK_CODE}`);
 	}
+
+  setEcho(echo: boolean): Promise<InSystemProgramming> {
+    return this.sendCommand(`A ${ echo ? 1 : 0 }`)
+        .then(() => {
+          this.echo = echo;
+          return this;
+        });
+  }
 
   setBaudRate(baud: number, stop: number = 1): Promise<InSystemProgramming> {
     return this.sendCommand(`B ${baud} ${stop}`)

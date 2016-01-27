@@ -1,4 +1,5 @@
 // http://antena.fe.uni-lj.si/literatura/VajeOK/USB2138/Pekac/lpcsp/src/lpcsp.c
+// https://github.com/lopple/lpcsp
 
 export var PART_IDENTIFICATIONS = {
   0x00008100: '810',

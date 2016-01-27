@@ -1,8 +1,10 @@
 import {InSystemProgramming} from "./InSystemProgramming";
 import {LPCProgrammer} from './LPCProgrammer';
+import {MemoryReader} from './MemoryReader';
 import * as Handshake from "./Handshake";
 import {PART_IDENTIFICATIONS} from './PartIdentifications';
 
+var dump = require('buffer-hexdump');
 import * as program from 'commander';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -29,7 +31,22 @@ program.command('ping')
   .description('ping device')
   .action(() => {
     Handshake.open(program['port'])
-      .then((isp) => pingDevice(isp))
+      .then(isp => pingDevice(isp))
+      .catch(catchError);
+  });
+
+program.command('read <address> <length>')
+  .description('read memory')
+  .action((address, length) => {
+    Handshake.open(program['port'])
+      .then(isp => {
+        let reader = new MemoryReader(isp);
+        return reader.readFully({address, length});
+      })
+      .then(buffer => {
+        console.log(dump(buffer));
+        process.exit();
+      })
       .catch(catchError);
   });
 

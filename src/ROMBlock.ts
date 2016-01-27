@@ -1,16 +1,17 @@
 var Symbol = require('es6-symbol');
 
 import * as FlashMemory from './FlashMemory';
+import {MemoryBlock} from './MemoryBlock';
 import {ROMAddress} from './ROMAddress';
 
 const _addressSym = Symbol();
-const _sizeSym = Symbol();
+const _lengthSym = Symbol();
 
-export class ROMBlock {
+export class ROMBlock implements MemoryBlock {
 
 	get address(): number { return this[_addressSym].address; }
 	get sector(): number { return this[_addressSym].sector; }
-	get size(): number { return this[_sizeSym]; }
+	get length(): number { return this[_lengthSym]; }
 
 	constructor(addr: ROMAddress, size: number) {
 		let n = addr.address;
@@ -22,16 +23,16 @@ export class ROMBlock {
 			throw new RangeError(`ROM block [0x${n.toString(16)}...0x${m.toString(16)}] out of address space`);
 		}
 		this[_addressSym] = addr;
-		this[_sizeSym] = size;
+		this[_lengthSym] = size;
 	}
 
 	adjust(diff: number): ROMBlock {
-		let size = Math.max(0, this.size - diff);
+		let size = Math.max(0, this.length - diff);
 		return ROMBlock.fromAddress(this.address + diff, size);
 	}
 
 	containsAddress(addr: number | ROMAddress): boolean {
-		return this.address <= addr && addr < this.address + this.size;
+		return this.address <= addr && addr < this.address + this.length;
 	}
 
 	// toString(): string {

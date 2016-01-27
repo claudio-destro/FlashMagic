@@ -1,10 +1,11 @@
 import {InSystemProgramming} from './InSystemProgramming';
 
+const ECHO = true;
 const SYNCHRONIZED = 'Synchronized';
 const SYNC_REGEXP = new RegExp(`^\\?*${SYNCHRONIZED}`);
 
-function handshake(isp: InSystemProgramming, frequency: number, count: number): Promise<InSystemProgramming> {
-  let freq = frequency.toString(10);
+function handshake(isp: InSystemProgramming, cclk: number, count: number): Promise<InSystemProgramming> {
+  cclk /= 1000; // kHz
   return new Promise<InSystemProgramming>((resolve, reject) => {
     (function synchronize() {
       isp.write('?')
@@ -17,26 +18,26 @@ function handshake(isp: InSystemProgramming, frequency: number, count: number): 
         })
         .then(() => isp.assert(SYNCHRONIZED))
         .then(ack => isp.assert('OK'))
-        .then(() => isp.writeln(freq))
-        .then(() => isp.assert(freq))
+        .then(() => isp.sendLine(cclk.toString(10)))
         .then(ack => isp.assert('OK'))
+        .then(() => isp.setEcho(ECHO))
         .then(() => resolve(isp))
         .catch(error => {
           if (count-- <= 0) {
             return reject(error);
           } else {
             // console.warn(error);
-            setImmediate(synchronize);
+            process.nextTick(synchronize);
           }
         });
     })();
   });
 }
 
-export function open(path: string, baud: number = 115200, frequency: number = 12000000): Promise<InSystemProgramming> {
+export function open(path: string, baud: number = 115200, cclk: number = 12000000): Promise<InSystemProgramming> {
 	return new InSystemProgramming(path, baud)
       .open()
-      .then(isp => handshake(isp, frequency / 1000, Infinity));
+      .then(isp => handshake(isp, cclk, Infinity));
       //.then(isp => isp.setBaudRate(baud))
       //.then(isp => isp.unlock());
 }
