@@ -38,7 +38,9 @@ program.command('ping')
 program.command('read <address> <length>')
   .description('read memory')
   .option('-O, --output <file>', 'output file', null)
-  .action((address, length, cmd) => {
+  .action((addr, len, cmd) => {
+    let address = parseInt(addr);
+    let length = parseInt(len);
     Handshake.open(program['port'])
       .then(isp => {
         let reader = new MemoryReader(isp);
@@ -47,8 +49,8 @@ program.command('read <address> <length>')
       .then(buffer => {
         console.log(dump(buffer));
         if (cmd.output) {
-          fs.writeFileSync(cmd.output, buffer, 'binary');
-          console.log(`Written ${buffer.length} bytes to ${cmd.output}`);
+          fs.writeFileSync(cmd.output, buffer, {encoding: 'binary'});
+          console.log(`${buffer.length} bytes written to ${cmd.output}`);
         }
         process.exit(0);
       })
