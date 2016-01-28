@@ -1,6 +1,6 @@
 import {InSystemProgramming} from './InSystemProgramming';
 
-const ECHO = true;
+const ECHO = false;
 const SYNCHRONIZED = 'Synchronized';
 const SYNC_REGEXP = new RegExp(`^\\?*${SYNCHRONIZED}`);
 
