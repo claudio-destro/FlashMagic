@@ -47,10 +47,11 @@ program.command('read <address> <length>')
         return reader.readFully({address, length});
       })
       .then(buffer => {
-        console.log(dump(buffer));
         if (cmd.output) {
           fs.writeFileSync(cmd.output, buffer, {encoding: 'binary'});
           console.log(`${buffer.length} bytes written to ${cmd.output}`);
+        } else {
+          console.log(dump(buffer));
         }
         process.exit(0);
       })
