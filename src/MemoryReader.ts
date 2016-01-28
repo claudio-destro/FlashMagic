@@ -43,7 +43,7 @@ export class MemoryReader {
 				} else { // if (index < buffer.length) {
           isp.read().then(data => {
             let b = uud.decode(data);
-            buffer = Buffer.concat([buffer, b], length);
+            buffer = Buffer.concat([buffer, b], buffer.length + b.length);
             index += b.length;
             lineCount++;
             process.nextTick(loop);
