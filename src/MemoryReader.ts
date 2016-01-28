@@ -14,7 +14,9 @@ export class MemoryReader {
 	constructor(private isp: InSystemProgramming) { }
 
 	readFully(block: MemoryBlock): Promise<Buffer> {
-    return this.isp.sendCommand(`R ${block.address} ${block.length}`)
+    let count = block.length;
+		count = (count & 3) === 0 ? count : 4 + (count & ~3);
+    return this.isp.sendCommand(`R ${block.address} ${count}`)
         .then(() => this.downloadChunk(block.length));
 	}
 
@@ -27,24 +29,24 @@ export class MemoryReader {
       let buffer = new Buffer(0);
 			(function loop(): void {
 				if (lineCount === LINES_PER_CHUNK || index >= length) {
-          isp.assert(uud.checksum.toString()).then(() => {
-            uud.reset();
-            lineCount = 0;
-            if (index < length) {
-              process.nextTick(loop);
-            } else {
-              resolve(buffer);
-            }
-          }).catch(error => reject(error));
+          isp.assert(uud.checksum.toString())
+              .then(() => isp.sendLine('OK')) // ack
+              .then(() => {
+                uud.reset();
+                lineCount = 0;
+                if (index < length) {
+                  process.nextTick(loop);
+                } else {
+                  resolve(buffer);
+                }
+              }).catch(error => reject(error));
 				} else { // if (index < buffer.length) {
           isp.read().then(data => {
-            //isp.writeln(data).then(() => {
-              let b = uud.decode(data);
-              buffer = Buffer.concat([buffer, b], length);
-              index += b.length;
-              lineCount++;
-              process.nextTick(loop);
-            //})
+            let b = uud.decode(data);
+            buffer = Buffer.concat([buffer, b], length);
+            index += b.length;
+            lineCount++;
+            process.nextTick(loop);
 					}).catch(error => reject(error));
 				}
 			})();
