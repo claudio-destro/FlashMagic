@@ -19,15 +19,16 @@ export class RAMWriter {
 	constructor(private isp: InSystemProgramming) { }
 
 	writeToRAM(buffer: Buffer): Promise<RAMWriter> {
-		return this.isp.sendCommand(`W ${this.address} ${buffer.length}`)
-			.then(() => {
-				return this.uploadChunk(buffer);
-			}).then(() => {
-				return this.isp.assertSuccess();
-			}).then(() => {
-				this.address = this.address.increment(buffer.length);
-				return this;
-			});
+    let ret: Promise<any> = this.isp.sendCommand(`W ${this.address} ${buffer.length}`)
+        .then(() => this.uploadChunk(buffer));
+    if (process.env['ISP'] === 'legacy') {
+      // XXX our bootloader sends CMD_SUCCESS after a write ;(
+      ret = ret.then(() => this.isp.assertSuccess());
+    }
+    return ret.then(() => {
+      this.address = this.address.increment(buffer.length);
+      return this;
+    });
 	}
 
 	private uploadChunk(buffer: Buffer): Promise<void> {
@@ -41,7 +42,7 @@ export class RAMWriter {
 					isp.sendLine(uue.checksum.toString()).then(() => {
 						uue.reset();
 						lineCount = 0;
-						return isp.assertOK();
+						return isp.assert('OK');
 					}).then(() => {
 						if (index < buffer.length) {
 							process.nextTick(loop);

@@ -51,9 +51,3 @@ function encodeTriple(a: number, b: number, c: number): string {
 	       encodeSingle(((b << 2) & 0x3C) | ((c >>> 6) & 0x03)) +
 	       encodeSingle(c & 0x3F);
 }
-
-// var b: Uint8Array = new Uint8Array(256);
-// for (let i = 0; i < b.length; i++) { b[i] = i; }
-// var enc = new UUEncoder();
-// console.log(enc.encode(b, 0, 256));
-// console.log(enc.checksum);

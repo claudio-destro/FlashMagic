@@ -1,6 +1,10 @@
 import {InSystemProgramming} from "./InSystemProgramming";
 import {LPCProgrammer} from './LPCProgrammer';
+import {MemoryReader} from './MemoryReader';
+import * as Handshake from "./Handshake";
+import {PART_IDENTIFICATIONS} from './PartIdentifications';
 
+var dump = require('buffer-hexdump');
 import * as program from 'commander';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -8,22 +12,46 @@ import * as fs from 'fs';
 var defaultComPort = '/dev/tty.usbmodemFD131';
 
 program
-  .option('-p, --port [port]', `serial port [${defaultComPort}]`, defaultComPort);
+  .option('-P, --port [port]', `serial port [${defaultComPort}]`, defaultComPort);
 
 program.command('flash <file>')
   .description('program file')
   .option('-A, --address <address>', 'flash address', parseInt)
   .action((file, cmd) => {
-    InSystemProgramming.makeAndOpen(program['port'])
-      .then((isp) => programFile(isp, file, cmd.address).then(() => isp.close()))
+    Handshake.open(program['port'])
+      .then((isp) => {
+        return programFile(isp, file, cmd.address)
+            .then(() => isp.close())
+            .then(() => process.exit(0))
+      })
       .catch(catchError);
   });
 
 program.command('ping')
   .description('ping device')
   .action(() => {
-    InSystemProgramming.makeAndOpen(program['port'])
-      .then((isp) => pingDevice(isp))
+    Handshake.open(program['port'])
+      .then(isp => pingDevice(isp))
+      .catch(catchError);
+  });
+
+program.command('read <address> <length>')
+  .description('read memory')
+  .option('-O, --output <file>', 'output file', null)
+  .action((address, length, cmd) => {
+    Handshake.open(program['port'])
+      .then(isp => {
+        let reader = new MemoryReader(isp);
+        return reader.readFully({address, length});
+      })
+      .then(buffer => {
+        console.log(dump(buffer));
+        if (cmd.output) {
+          fs.writeFileSync(cmd.output, buffer, 'binary');
+          console.log(`Written ${buffer.length} bytes to ${cmd.output}`);
+        }
+        process.exit(0);
+      })
       .catch(catchError);
   });
 
@@ -34,7 +62,7 @@ if (program.args.length === 0) {
 }
 
 function programFile(isp: InSystemProgramming, path: string, address: number): Promise<void> {
-  return isp.sendUnlockCommand().then(() => {
+  return isp.unlock().then(() => {
     let size = fs.statSync(path).size;
     let count = 0;
     let programmer = new LPCProgrammer(isp, address, size);
@@ -57,8 +85,8 @@ function pingDevice(isp: InSystemProgramming): void {
   let count = 0;
   (function loop(): void {
     let start = Date.now();
-    isp.sendUnlockCommand().then(() => {
-      console.log(`PING seq=${count++} time=${Date.now() - start} ms`);
+    isp.readPartIdentification().then(partId => {
+      console.log(`LPC${PART_IDENTIFICATIONS[partId] || partId} seq=${count++} time=${Date.now() - start} ms`);
       setTimeout(loop, 1000);
     }).catch(error => {
       console.error(error);

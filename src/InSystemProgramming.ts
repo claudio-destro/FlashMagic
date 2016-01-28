@@ -23,6 +23,8 @@ const ERRORS: Array<string> = [
 	/* 19 */ 'Code read protection enabled'
 ];
 
+const UNLOCK_CODE = 0x5A5A;
+
 interface DataQueue<T> {
 	push(data: T): void;
 	pop(): T;
@@ -44,13 +46,19 @@ export class InSystemProgramming {
 
 	private queue: DataQueue<string> = LINE_QUEUE;
 
-	constructor(path: string, baud: number = 115200) {
+  private echo: boolean = true;
 
-		this.serialport = new com.SerialPort(path, {
+	constructor(private path: string, baud: number = 115200) {
+    this.reinitialize(baud, 1);
+  }
+
+	private reinitialize(baud: number, stop: number) {
+   	this.serialport = new com.SerialPort(this.path, {
 			baudRate: baud,
+      stopBits: stop,
+      parity: 'none',
 			parser: com.parsers.readline('\r\n')
 		}, false); // open later
-
 		this.serialport.on('data', (data: Buffer | String) => {
 			const s = data.toString();
 			console.log(`---> ${s}`);
@@ -98,17 +106,22 @@ export class InSystemProgramming {
 	}
 
 	write(data: string): Promise<InSystemProgramming> {
-		console.log(`<--- ${data}`);
+		console.log(`<--- ${data.trim()}`); // trim EOL
 		this.queue.drain(); // XXX
 		return new Promise<InSystemProgramming>((resolve, reject) => {
-			this.serialport.write(data + '\r\n', (error: any) => {
-				if (error) throw error;
+			this.serialport.write(data, (error: any) => {
+				if (error) {
+          return reject(error);
+        }
 				this.serialport.drain((error: any) => {
-					if (error) throw error;
-					resolve(this);
+          return error ? reject(error) : resolve(this);
 				});
 			});
 		});
+	}
+
+	writeln(data: string): Promise<InSystemProgramming> {
+    return this.write(data + '\r\n');
 	}
 
 	close(): Promise<InSystemProgramming> {
@@ -124,12 +137,16 @@ export class InSystemProgramming {
 	///////////////
 
 	sendLine(data: string): Promise<InSystemProgramming> {
-		return this.write(data).then(() => {
-			return this.read();
-		}).then((ack) => {
-			if (ack !== data) throw new Error(`Not acknowledged: ${JSON.stringify(ack)}`);
-			return this;
-		});
+    let p = this.writeln(data);
+    if (this.echo) {
+      p = p.then(() => {
+        return this.read();
+      }).then((ack) => {
+        if (ack !== data) throw new Error(`Not acknowledged: ${JSON.stringify(ack)}`);
+        return this;
+      });
+    }
+    return p;
 	}
 
 	sendCommand(data: string): Promise<InSystemProgramming> {
@@ -149,22 +166,45 @@ export class InSystemProgramming {
 		});
 	}
 
-	assertOK(): Promise<InSystemProgramming> {
+  assert(ack: string): Promise<InSystemProgramming> {
 		return this.read().then((data) => {
-			if (data !== 'OK') {
-				throw new Error(`Not "OK": ${JSON.stringify(data)}`);
+			if (data !== ack) {
+				throw new Error(`Not "${ack}": ${JSON.stringify(data)}`);
 			}
 			return this;
 		});
-	}
+  }
 
 	/////////////
 	// HELPERS //
 	/////////////
 
-	sendUnlockCommand(): Promise<InSystemProgramming> {
-		return this.sendCommand("U 23130");
+	unlock(): Promise<InSystemProgramming> {
+		return this.sendCommand(`U ${UNLOCK_CODE}`);
 	}
+
+  setEcho(echo: boolean): Promise<InSystemProgramming> {
+    return this.sendCommand(`A ${ echo ? 1 : 0 }`)
+        .then(() => {
+          this.echo = echo;
+          return this;
+        });
+  }
+
+  setBaudRate(baud: number, stop: number = 1): Promise<InSystemProgramming> {
+    return this.sendCommand(`B ${baud} ${stop}`)
+        .then(() => this.close())
+        .then(() => this.reinitialize(baud, stop))
+        .then(() => this.open());
+  }
+
+  readPartIdentification(): Promise<string> {
+    return this.sendCommand('J').then(() => this.read());
+  }
+
+  readBootcodeVersion(): Promise<string> {
+    return this.sendCommand('K').then(() => this.read());
+  }
 
 	static makeAndOpen(path: string, baud: number = 115200): Promise<InSystemProgramming> {
 		return new InSystemProgramming(path, baud).open();
