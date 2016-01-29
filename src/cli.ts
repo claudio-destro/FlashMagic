@@ -12,15 +12,17 @@ import * as fs from 'fs';
 var defaultComPort = '/dev/tty.usbmodemFD131';
 
 program
-  .option('-P, --port [port]', `serial port [${defaultComPort}]`, defaultComPort);
+  .option('-P, --port [port]', `serial port [${defaultComPort}]`, defaultComPort)
+  .option('-V, --verbose', `Make the operation more talkative`, true);
 
-program.command('flash <file>')
+program.command('write <file> <address>')
   .description('program file')
-  .option('-A, --address <address>', 'flash address', parseInt)
-  .action((file, cmd) => {
+  .action((file, addr, cmd) => {
+    let address = parseInt(addr);
     Handshake.open(program['port'])
       .then((isp) => {
-        return programFile(isp, file, cmd.address)
+        isp.verbose = !! program['verbose'];
+        return programFile(isp, file, address)
             .then(() => isp.close())
             .then(() => process.exit(0))
       })
@@ -31,7 +33,10 @@ program.command('ping')
   .description('ping device')
   .action(() => {
     Handshake.open(program['port'])
-      .then(isp => pingDevice(isp))
+      .then(isp => {
+        isp.verbose = !! program['verbose'];
+        pingDevice(isp);
+      })
       .catch(catchError);
   });
 
@@ -43,6 +48,7 @@ program.command('read <address> <length>')
     let length = parseInt(len);
     Handshake.open(program['port'])
       .then(isp => {
+        isp.verbose = !! program['verbose'];
         let reader = new MemoryReader(isp);
         return reader.readFully({address, length});
       })

@@ -14,7 +14,7 @@ const SECTOR_ADDRESS = new Uint32Array([
 	0x0007E000
 ]);
 
-export const MIN_SECTOR = 2; // 2 to protect custom bootloader
+export const MIN_SECTOR = 0; // 2 to protect custom bootloader
 export const MAX_SECTOR = SECTOR_ADDRESS.length - MIN_SECTOR;
 
 export const MIN_ROM_ADDRESS = SECTOR_ADDRESS[MIN_SECTOR];
