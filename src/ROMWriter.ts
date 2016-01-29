@@ -42,7 +42,7 @@ export class ROMWriter implements MemoryBlock {
 	// adjust block avoiding overflows and misalignments
 	private increment(count: number): ROMBlock {
 		// count = Math.min(count, this.size);
-		count = (count & 3) === 0 ? count : 4 + (count & ~3);
+		count = FlashMemory.alignCount(count);
 		return this.block.adjust(count);
 	}
 }

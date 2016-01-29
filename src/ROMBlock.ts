@@ -58,6 +58,3 @@ export class ROMBlock implements MemoryBlock {
 	}
 
 }
-
-// var x = ROMBlock.fromAddress(0x7d000, 0x7e000-0x7d000);
-// console.log(x.increment(0x1000-4).toString());

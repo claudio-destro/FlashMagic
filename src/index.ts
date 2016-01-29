@@ -1,4 +1,3 @@
-export * from './BufferStream';
 export * from './FlashMemory';
 export * from './InSystemProgramming';
 export * from './LPCProgrammer';

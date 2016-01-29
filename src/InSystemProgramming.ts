@@ -38,6 +38,10 @@ class LineQueue implements DataQueue<string> {
 	push(data: string): void { this.queue.push(data); }
 }
 
+interface Logger<T> { log(msg: T): void; }
+class VerboseLogger implements Logger<string> { log(msg: string) { console.log(msg); } }
+class QuiteLogger implements Logger<string> { log(msg: string) { /* nothing */ } }
+
 const LINE_QUEUE = new LineQueue;
 
 export class InSystemProgramming {
@@ -45,6 +49,10 @@ export class InSystemProgramming {
 	private serialport;
 
 	private queue: DataQueue<string> = LINE_QUEUE;
+
+  set verbose(b: boolean) { this.logger = b ? new VerboseLogger() : new QuiteLogger(); }
+
+  private logger: Logger<string> = new VerboseLogger();
 
   private echo: boolean = true;
 
@@ -61,7 +69,7 @@ export class InSystemProgramming {
 		}, false); // open later
 		this.serialport.on('data', (data: Buffer | String) => {
 			const s = data.toString();
-			console.log(`---> ${s}`);
+			this.logger.log(`---> ${s}`);
 			try {
 				this.queue.push(s);
 			} finally {
@@ -106,7 +114,7 @@ export class InSystemProgramming {
 	}
 
 	write(data: string): Promise<InSystemProgramming> {
-		console.log(`<--- ${data.trim()}`); // trim EOL
+		this.logger.log(`<--- ${data.trim()}`); // trim EOL
 		this.queue.drain(); // XXX
 		return new Promise<InSystemProgramming>((resolve, reject) => {
 			this.serialport.write(data, (error: any) => {
