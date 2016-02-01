@@ -36,6 +36,7 @@ export class ROMWriter implements MemoryBlock {
 		return this.isp.unlock()
 			.then(() => this.isp.sendCommand(`P ${this.sector} ${endSect}`))
       .then(() => this.isp.sendCommand(`C ${this.address} ${srcAddr} ${count}`))
+//    .then(() => this.isp.sendCommand(`M ${this.address} ${srcAddr} ${count}`))
       .then(() => { this.block = this.increment(count); return this; });
   }
 

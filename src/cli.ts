@@ -4,7 +4,7 @@ import {LPCProgrammer} from './LPCProgrammer';
 import {MemoryReader} from './MemoryReader';
 import * as Handshake from "./Handshake";
 import {PART_IDENTIFICATIONS} from './PartIdentifications';
-import {Progress} from './Spinner';
+import {Progress} from './Progress';
 
 var dump = require('buffer-hexdump');
 import * as program from 'commander';
@@ -83,10 +83,10 @@ function programFile(isp: InSystemProgramming, path: string, address: number): P
     let programmer = new LPCProgrammer(isp, address, size);
     return new Promise<void>((resolve, reject) => {
       let stream = fs.createReadStream(path);
-      let spinner = new Progress();
+      let progress = new Progress();
       programmer.program(stream)
         .on('start', () => console.log(`About to flash ${size} bytes...`))
-        .on('chunk', buffer => { count += buffer.length; spinner.spin(count, size); })
+        .on('chunk', buffer => { count += buffer.length; progress.spin(count, size); })
         .on('error', error => reject(error))
         .on('end', () => {
           console.log(`${path}: ${count} bytes written`);
