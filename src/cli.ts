@@ -1,8 +1,10 @@
+import {InApplicationProgramming} from "./InApplicationProgramming";
 import {InSystemProgramming} from "./InSystemProgramming";
 import {LPCProgrammer} from './LPCProgrammer';
 import {MemoryReader} from './MemoryReader';
 import * as Handshake from "./Handshake";
 import {PART_IDENTIFICATIONS} from './PartIdentifications';
+import {Progress} from './Spinner';
 
 var dump = require('buffer-hexdump');
 import * as program from 'commander';
@@ -13,18 +15,19 @@ var defaultComPort = '/dev/tty.usbmodemFD131';
 
 program
   .option('-P, --port [port]', `serial port [${defaultComPort}]`, defaultComPort)
-  .option('-V, --verbose', `Make the operation more talkative`, true);
+  .option('-V, --verbose', `make the operation more talkative`, true);
 
-program.command('write <file> <address>')
+program.command('write')
   .description('program file')
-  .action((file, addr, cmd) => {
-    let address = parseInt(addr);
+  .option('-A, --address <address>', 'ROM address', parseInt)
+  .option('-I, --input <file>', 'input file', null)
+  .action((cmd) => {
     Handshake.open(program['port'])
       .then((isp) => {
-        isp.verbose = !! program['verbose'];
-        return programFile(isp, file, address)
-            .then(() => isp.close())
-            .then(() => process.exit(0))
+        isp.verbose = !!program['verbose'];
+        return programFile(isp, cmd.input, cmd.address)
+          .then(() => isp.close())
+          .then(() => process.exit(0))
       })
       .catch(catchError);
   });
@@ -34,27 +37,30 @@ program.command('ping')
   .action(() => {
     Handshake.open(program['port'])
       .then(isp => {
-        isp.verbose = !! program['verbose'];
+        isp.verbose = !!program['verbose'];
         pingDevice(isp);
       })
       .catch(catchError);
   });
 
-program.command('read <address> <length>')
+program.command('read')
   .description('read memory')
+  .option('-A, --address <address>', 'memory address', parseInt)
+  .option('-L, --length <length>', 'length', parseInt)
   .option('-O, --output <file>', 'output file', null)
-  .action((addr, len, cmd) => {
-    let address = parseInt(addr);
-    let length = parseInt(len);
+  .action((cmd) => {
     Handshake.open(program['port'])
       .then(isp => {
-        isp.verbose = !! program['verbose'];
+        isp.verbose = !!program['verbose'];
         let reader = new MemoryReader(isp);
-        return reader.readFully({address, length});
+        return reader.readFully({
+          address: cmd.address,
+          length: cmd.length
+        });
       })
       .then(buffer => {
         if (cmd.output) {
-          fs.writeFileSync(cmd.output, buffer, {encoding: 'binary'});
+          fs.writeFileSync(cmd.output, buffer, { encoding: 'binary' });
           console.log(`${buffer.length} bytes written to ${cmd.output}`);
         } else {
           console.log(dump(buffer));
@@ -77,9 +83,10 @@ function programFile(isp: InSystemProgramming, path: string, address: number): P
     let programmer = new LPCProgrammer(isp, address, size);
     return new Promise<void>((resolve, reject) => {
       let stream = fs.createReadStream(path);
+      let spinner = new Progress();
       programmer.program(stream)
         .on('start', () => console.log(`About to flash ${size} bytes...`))
-        .on('chunk', buffer => count += buffer.length)
+        .on('chunk', buffer => { count += buffer.length; spinner.spin(count, size); })
         .on('error', error => reject(error))
         .on('end', () => {
           console.log(`${path}: ${count} bytes written`);

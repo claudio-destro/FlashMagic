@@ -21,7 +21,7 @@ export class LPCProgrammer extends EventEmitter {
 		private destAddr: number,
 		private length: number,
 		private srcAddr: number = RAMAddress.BASE + 1024 * 10,
-		private chunkSize: number = 1024 * 1) {
+		private chunkSize: number = 4096) {
 		super();
 		this.uploader = new RAMWriter(isp);
 		this.writer = new ROMWriter(isp, destAddr, length);

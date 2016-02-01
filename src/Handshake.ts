@@ -4,8 +4,7 @@ const ECHO = false;
 const SYNCHRONIZED = 'Synchronized';
 const SYNC_REGEXP = new RegExp(`^\\?*${SYNCHRONIZED}`);
 
-function handshake(isp: InSystemProgramming, cclk: number, count: number): Promise<InSystemProgramming> {
-  cclk /= 1000; // kHz
+function handshake(isp: InSystemProgramming, count: number): Promise<InSystemProgramming> {
   return new Promise<InSystemProgramming>((resolve, reject) => {
     (function synchronize() {
       isp.write('?')
@@ -18,7 +17,7 @@ function handshake(isp: InSystemProgramming, cclk: number, count: number): Promi
         })
         .then(() => isp.assert(SYNCHRONIZED))
         .then(ack => isp.assert('OK'))
-        .then(() => isp.sendLine(cclk.toString(10)))
+        .then(() => isp.sendLine(isp.cclk.toString(10)))
         .then(ack => isp.assert('OK'))
         .then(() => isp.setEcho(ECHO))
         .then(() => resolve(isp))
@@ -35,9 +34,9 @@ function handshake(isp: InSystemProgramming, cclk: number, count: number): Promi
 }
 
 export function open(path: string, baud: number = 115200, cclk: number = 12000000): Promise<InSystemProgramming> {
-	return new InSystemProgramming(path, baud)
+	return new InSystemProgramming(path, baud, cclk / 1000) // must be in kHz
       .open()
-      .then(isp => handshake(isp, cclk, Infinity));
+      .then(isp => handshake(isp, Infinity));
       //.then(isp => isp.setBaudRate(baud))
       //.then(isp => isp.unlock());
 }
