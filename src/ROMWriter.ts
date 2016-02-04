@@ -33,10 +33,20 @@ export class ROMWriter implements MemoryBlock {
 
   copyRAMToFlash(srcAddr: RAMAddress, count: number): Promise<ROMWriter> {
     const endSect = FlashMemory.addressToSector(this.address + count - 1);
-		return this.isp.unlock()
-			.then(() => this.isp.sendCommand(`P ${this.sector} ${endSect}`))
+    return this.isp.unlock()
+      .then(() => this.isp.sendCommand(`P ${this.sector} ${endSect}`))
       .then(() => this.isp.sendCommand(`C ${this.address} ${srcAddr} ${count}`))
-//    .then(() => this.isp.sendCommand(`M ${this.address} ${srcAddr} ${count}`))
+      .then(() => {
+        let dst: number = this.address;
+        let src: number = srcAddr.address;
+        let len: number = count;
+        if (dst === 0) {
+          dst += 64;
+          src += 64;
+          len -= 64;
+        }
+        return this.isp.sendCommand(`M ${dst} ${src} ${len}`);
+      })
       .then(() => { this.block = this.increment(count); return this; });
   }
 

@@ -1,4 +1,3 @@
-import {InApplicationProgramming} from "./InApplicationProgramming";
 import {InSystemProgramming} from "./InSystemProgramming";
 import {LPCProgrammer} from './LPCProgrammer';
 import {MemoryReader} from './MemoryReader';
