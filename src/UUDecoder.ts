@@ -4,22 +4,22 @@ const _checksumSym = Symbol();
 
 export class UUDecoder {
 
-	constructor() {
-		this[_checksumSym] = 0;
-	}
+  constructor() {
+    this[_checksumSym] = 0;
+  }
 
-	get checksum(): number {
-		return this[_checksumSym];
-	}
+  get checksum(): number {
+    return this[_checksumSym];
+  }
 
-	reset(): void {
-		this[_checksumSym] = 0;
-	}
+  reset(): void {
+    this[_checksumSym] = 0;
+  }
 
-	decode(data: string): Buffer {
-		let length = decodeSingle(data.charCodeAt(0));
+  decode(data: string): Buffer {
+    let length = decodeSingle(data.charCodeAt(0));
     let out = new Buffer(length);
-		let sum = 0;
+    let sum = 0;
     length -= 3;
     let i = 0, j = 1;
     while (i < length) {
@@ -50,9 +50,9 @@ export class UUDecoder {
         }
       }
     }
-		this[_checksumSym] += sum;
-		return out;
-	}
+    this[_checksumSym] += sum;
+    return out;
+  }
 
 }
 
@@ -66,6 +66,6 @@ function decodeQuad(a: number, b: number, c: number, d: number): number[] {
   c = decodeSingle(c);
   d = decodeSingle(d);
   return [((a & 0x3F) << 2) | ((b & 0x30) >>> 4),
-          ((b & 0x0F) << 4) | ((c & 0x3C) >>> 2),
-          ((c & 0x03) << 6) | (d & 0x3F)];
+    ((b & 0x0F) << 4) | ((c & 0x3C) >>> 2),
+    ((c & 0x03) << 6) | (d & 0x3F)];
 }

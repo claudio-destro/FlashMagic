@@ -1,27 +1,6 @@
 var com = require('serialport');
 
-const ERRORS: Array<string> = [
-	/*  0 */ 'Command is executed successfully',
-	/*  1 */ 'Invalid command',
-	/*  2 */ 'Source address is not on a word boundary',
-	/*  3 */ 'Destination address is not on a correct boundary',
-	/*  4 */ 'Source address is not mapped in the memory map',
-	/*  5 */ 'Destination address is not mapped in the memory map',
-	/*  6 */ 'Byte count is not multiple of 4 or is not a permitted value',
-	/*  7 */ 'Sector number is invalid',
-	/*  8 */ 'Sector is not blank',
-	/*  9 */ 'Command to prepare sector for write operation was not executed',
-	/* 10 */ 'Source and destination data is not same',
-	/* 11 */ 'Flash programming hardware interface is busy',
-	/* 12 */ 'Insufficient number of parameters or invalid parameter',
-	/* 13 */ 'Address is not on word boundary',
-	/* 14 */ 'Address is not mapped in the memory map',
-	/* 15 */ 'Command is locked',
-	/* 16 */ 'Unlock code is invalid',
-	/* 17 */ 'Invalid baud rate setting',
-	/* 18 */ 'Invalid stop bit setting',
-	/* 19 */ 'Code read protection enabled'
-];
+import * as ReturnCode from './ReturnCode';
 
 const UNLOCK_CODE = 0x5A5A;
 
@@ -38,6 +17,10 @@ class LineQueue implements DataQueue<string> {
 	push(data: string): void { this.queue.push(data); }
 }
 
+interface Logger<T> { log(msg: T): void; }
+class VerboseLogger implements Logger<string> { log(msg: string) { console.log(msg); } }
+class QuiteLogger implements Logger<string> { log(msg: string) { /* nothing */ } }
+
 const LINE_QUEUE = new LineQueue;
 
 export class InSystemProgramming {
@@ -46,9 +29,13 @@ export class InSystemProgramming {
 
 	private queue: DataQueue<string> = LINE_QUEUE;
 
+  set verbose(b: boolean) { this.logger = b ? new VerboseLogger() : new QuiteLogger(); }
+
+  private logger: Logger<string> = new VerboseLogger();
+
   private echo: boolean = true;
 
-	constructor(private path: string, baud: number = 115200) {
+	constructor(private path: string, baud: number, public cclk: number) {
     this.reinitialize(baud, 1);
   }
 
@@ -61,7 +48,7 @@ export class InSystemProgramming {
 		}, false); // open later
 		this.serialport.on('data', (data: Buffer | String) => {
 			const s = data.toString();
-			console.log(`---> ${s}`);
+			this.logger.log(`---> ${s}`);
 			try {
 				this.queue.push(s);
 			} finally {
@@ -106,7 +93,7 @@ export class InSystemProgramming {
 	}
 
 	write(data: string): Promise<InSystemProgramming> {
-		console.log(`<--- ${data.trim()}`); // trim EOL
+		this.logger.log(`<--- ${data.trim()}`); // trim EOL
 		this.queue.drain(); // XXX
 		return new Promise<InSystemProgramming>((resolve, reject) => {
 			this.serialport.write(data, (error: any) => {
@@ -158,10 +145,7 @@ export class InSystemProgramming {
 			if (!(/^\d+$/.test(data))) {
 				throw new TypeError(`Not a number: ${JSON.stringify(data)}`);
 			}
-			let rc = ~~data;
-			if (rc > 0) {
-				throw new Error(ERRORS[rc]);
-			}
+      ReturnCode.rethrow(~~data);
 			return this;
 		});
 	}
@@ -205,8 +189,4 @@ export class InSystemProgramming {
   readBootcodeVersion(): Promise<string> {
     return this.sendCommand('K').then(() => this.read());
   }
-
-	static makeAndOpen(path: string, baud: number = 115200): Promise<InSystemProgramming> {
-		return new InSystemProgramming(path, baud).open();
-	}
 }

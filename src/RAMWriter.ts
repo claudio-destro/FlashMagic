@@ -6,9 +6,6 @@ import {RAMAddress} from './RAMAddress';
 import {ROMAddress} from './ROMAddress';
 import {UUEncoder} from './UUEncoder';
 
-const LINES_PER_CHUNK = 20;
-const BYTES_PER_LINE = 45;
-
 const _addressSym = Symbol();
 
 export class RAMWriter {
@@ -38,7 +35,7 @@ export class RAMWriter {
 			let lineCount = 0;
 			let index = 0;
 			(function loop(): void {
-				if (lineCount === LINES_PER_CHUNK || index >= buffer.length) {
+				if (lineCount === FlashMemory.LINES_PER_CHUNK || index >= buffer.length) {
 					isp.sendLine(uue.checksum.toString()).then(() => {
 						uue.reset();
 						lineCount = 0;
@@ -51,7 +48,7 @@ export class RAMWriter {
 						}
 					}).catch(error => reject(error));
 				} else { // if (index < buffer.length) {
-					let count = Math.min(BYTES_PER_LINE, buffer.length - index);
+					let count = Math.min(FlashMemory.BYTES_PER_LINE, buffer.length - index);
 					isp.sendLine(uue.encode(buffer, index, count)).then(() => {
 						index += count;
 						lineCount++;

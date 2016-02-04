@@ -1,11 +1,9 @@
 var Symbol = require('es6-symbol');
 
 import {InSystemProgramming} from './InSystemProgramming';
+import * as FlashMemory from './FlashMemory';
 import {MemoryBlock} from './MemoryBlock';
 import {UUDecoder} from './UUDecoder';
-
-const LINES_PER_CHUNK = 20;
-const BYTES_PER_LINE = 45;
 
 const _addressSym = Symbol();
 
@@ -14,8 +12,7 @@ export class MemoryReader {
 	constructor(private isp: InSystemProgramming) { }
 
 	readFully(block: MemoryBlock): Promise<Buffer> {
-    let count = block.length;
-		count = (count & 3) === 0 ? count : 4 + (count & ~3);
+    let count = FlashMemory.alignCount(block.length);
     return this.isp.sendCommand(`R ${block.address} ${count}`)
         .then(() => this.downloadChunk(block.length));
 	}
@@ -28,7 +25,7 @@ export class MemoryReader {
 			let index = 0;
       let buffer = new Buffer(0);
 			(function loop(): void {
-				if (lineCount === LINES_PER_CHUNK || index >= length) {
+				if (lineCount === FlashMemory.LINES_PER_CHUNK || index >= length) {
           isp.assert(uud.checksum.toString())
               .then(() => isp.sendLine('OK')) // ack
               .then(() => {

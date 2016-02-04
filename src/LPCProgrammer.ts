@@ -4,6 +4,7 @@ import {RAMAddress} from './RAMAddress';
 import {ROMBlock} from './ROMBlock';
 import {RAMWriter} from './RAMWriter';
 import {ROMWriter} from './ROMWriter';
+import * as UserCode from './UserCode';
 
 import {EventEmitter} from 'events';
 import {Readable} from 'stream';
@@ -21,7 +22,7 @@ export class LPCProgrammer extends EventEmitter {
 		private destAddr: number,
 		private length: number,
 		private srcAddr: number = RAMAddress.BASE + 1024 * 10,
-		private chunkSize: number = 1024 * 1) {
+		private chunkSize: number = 4096) {
 		super();
 		this.uploader = new RAMWriter(isp);
 		this.writer = new ROMWriter(isp, destAddr, length);
@@ -112,6 +113,10 @@ export class LPCProgrammer extends EventEmitter {
 
 	private doProgramBuffer(buffer: Buffer): Promise<ROMWriter> {
 		let ramAddr = this.uploader.address;
+    if (this.writer.address === 0) {
+      console.log('Patching vector table...');
+      UserCode.validateVectorTable(buffer);
+    }
 		return this.uploader.writeToRAM(buffer)
 			.then(() => this.writer.copyRAMToFlash(ramAddr, buffer.length));
 	}

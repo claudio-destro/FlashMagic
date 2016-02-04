@@ -14,11 +14,14 @@ const SECTOR_ADDRESS = new Uint32Array([
 	0x0007E000
 ]);
 
-export const MIN_SECTOR = 2; // 2 to protect custom bootloader
+export const MIN_SECTOR = 0; // 2 to protect custom bootloader
 export const MAX_SECTOR = SECTOR_ADDRESS.length - MIN_SECTOR;
 
 export const MIN_ROM_ADDRESS = SECTOR_ADDRESS[MIN_SECTOR];
 export const MAX_ROM_ADDRESS = SECTOR_ADDRESS[MAX_SECTOR + 1] - 1;
+
+export const LINES_PER_CHUNK = 20;
+export const BYTES_PER_LINE = 45;
 
 export function addressToSector(addr: number): number {
 	if (addr >= MIN_ROM_ADDRESS) {
@@ -45,12 +48,6 @@ export function sectorSize(sect: number): number {
 	throw new RangeError(`Bad sector ${sect}`);
 }
 
-// console.log(`Address [0x${MIN_ADDRESS.toString(16)}...0x${MAX_ADDRESS.toString(16)}]
-// Sector [${MIN_SECTOR}...${MAX_SECTOR}]`);
-
-// console.log(addressToSector(0x0007DFFF));
-// var n = addressToSector(0x0007D000);
-// console.log(n + ' ' + (sectorSize(n) / 1024) + 'KB');
-
-// console.log('0x' + sectorToAddress(27).toString(16));
-// console.log('0x' + sectorToAddress(2).toString(16));
+export function alignCount(count: number): number {
+		return (count & 3) === 0 ? count : 4 + (count & ~3);
+}
