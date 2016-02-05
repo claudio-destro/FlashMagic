@@ -34,9 +34,9 @@ function handshake(isp: InSystemProgramming, count: number): Promise<InSystemPro
 }
 
 export function open(path: string, baud: number = 115200, cclk: number = 12000000): Promise<InSystemProgramming> {
-	return new InSystemProgramming(path, baud, cclk / 1000) // must be in kHz
-      .open()
-      .then(isp => handshake(isp, Infinity));
-      //.then(isp => isp.setBaudRate(baud))
-      //.then(isp => isp.unlock());
+  return new InSystemProgramming(path, baud, cclk / 1000) // must be in kHz
+    .open()
+    .then(isp => handshake(isp, Infinity));
+    //.then(isp => isp.setBaudRate(baud))
+    //.then(isp => isp.unlock());
 }

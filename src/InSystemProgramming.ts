@@ -31,7 +31,7 @@ export class InSystemProgramming {
 
   set verbose(b: boolean) { this.logger = b ? new VerboseLogger() : new QuiteLogger(); }
 
-  private logger: Logger<string> = new VerboseLogger();
+  private logger: Logger<string> = new QuiteLogger();
 
   private echo: boolean = true;
 
