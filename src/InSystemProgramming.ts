@@ -1,3 +1,4 @@
+var Symbol = require('es6-symbol');
 var com = require('serialport');
 
 import * as ReturnCode from './ReturnCode';
@@ -23,6 +24,8 @@ class QuiteLogger implements Logger<string> { log(msg: string) { /* nothing */ }
 
 const LINE_QUEUE = new LineQueue;
 
+const _baudRateSym = Symbol();
+
 export class InSystemProgramming {
 
 	private serialport;
@@ -40,6 +43,7 @@ export class InSystemProgramming {
   }
 
 	private reinitialize(baud: number, stop: number) {
+    this[_baudRateSym] = baud;
    	this.serialport = new com.SerialPort(this.path, {
 			baudRate: baud,
       stopBits: stop,
@@ -175,7 +179,14 @@ export class InSystemProgramming {
         });
   }
 
+  get baudRate(): number { return this[_baudRateSym]; }
+
   setBaudRate(baud: number, stop: number = 1): Promise<InSystemProgramming> {
+    baud = ~~baud;
+    if (this.baudRate === baud) {
+      return Promise.resolve(this);
+    }
+    this[_baudRateSym] = baud;
     return this.sendCommand(`B ${baud} ${stop}`)
         .then(() => this.close())
         .then(() => this.reinitialize(baud, stop))

@@ -97,7 +97,7 @@ export class LPCProgrammer extends EventEmitter {
 				chunk = chunk.slice(written);
 				if (offset === buffer.length) {
 					emitStart();
-					this.emit('chunk', buffer);
+					this.emit('chunk', buffer, this.writer.address);
 					this.doProgramBuffer(buffer)
 						.then(resetBuffer)
 						.then(next)
