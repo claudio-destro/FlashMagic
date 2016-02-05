@@ -1,3 +1,5 @@
+[![npm version](https://badge.fury.io/js/flashmagic.js.svg)](https://badge.fury.io/js/flashmagic.js)
+
 # FlashMagic.js
 
 A library for programming flash based microcontrollers from [NXP](http://www.nxp.com/microcontrollers) using a serial protocol.
