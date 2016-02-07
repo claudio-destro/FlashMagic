@@ -24,7 +24,9 @@ function handshake(isp: InSystemProgramming, count: number): Promise<InSystemPro
         .then(isp => isp.sendLine(isp.cclk.toString(10)))
         .then(isp => isp.assert('OK'))
         .then(isp => isp.setEcho(ECHO))
-        .then(isp => resolve(isp))
+        .then(isp => isp.readPartIdentification())
+        .then(partId => isp.readBootcodeVersion())
+        .then(bootVer => resolve(isp))
         .catch(error => {
           if (count-- <= 0) {
             return reject(error);
@@ -37,10 +39,12 @@ function handshake(isp: InSystemProgramming, count: number): Promise<InSystemPro
   });
 }
 
-export function open(path: string, baud: number = 115200, cclk: number = 12000000): Promise<InSystemProgramming> {
+// Due to a node-serialport issue about file descriptor leak (open/close
+// problems), the default baud rate and initial baud rate are equal to
+// the maximum speed allowed 115200.
+export function open(path: string, baud: number = INITIAL_BAUDRATE, cclk: number = 12000000): Promise<InSystemProgramming> {
 	return new InSystemProgramming(path, INITIAL_BAUDRATE, cclk / 1000) // must be in kHz
       .open()
       .then(isp => handshake(isp, Infinity))
       .then(isp => isp.setBaudRate(baud));
-      //.then(isp => isp.unlock());
 }

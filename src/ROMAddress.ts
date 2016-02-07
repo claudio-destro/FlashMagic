@@ -1,6 +1,6 @@
 var Symbol = require('es6-symbol');
 
-import * as FlashMemory from './FlashMemory';
+import * as Utilities from './Utilities';
 
 const _addressSym = Symbol();
 const _sectorSym = Symbol();
@@ -8,7 +8,7 @@ const _sectorSym = Symbol();
 export class ROMAddress {
 
 	static get BASE() { return 0; }
-	static get SIZE() { return FlashMemory.MAX_ROM_ADDRESS + 1; } // 504 KB
+	static get SIZE() { return Utilities.MAX_ROM_ADDRESS + 1; } // 504 KB
 
 	get address(): number { return this[_addressSym]; }
 	get sector(): number { return this[_sectorSym]; }
@@ -22,10 +22,10 @@ export class ROMAddress {
 		if (addr < ROMAddress.BASE || addr >= ROMAddress.BASE + ROMAddress.SIZE) {
 			throw new RangeError(`ROM address 0x${addr.toString(16)} out of range`);
 		}
-		if (sect < 0 || sect > FlashMemory.MAX_SECTOR) {
+		if (sect < 0 || sect > Utilities.MAX_SECTOR) {
 			throw new RangeError(`ROM sector ${sect} out of range`);
 		}
-		if (FlashMemory.addressToSector(addr) !== sect) {
+		if (Utilities.addressToSector(addr) !== sect) {
 			throw new RangeError(`ROM address 0x${addr.toString(16)} / sector ${sect} mismatch`);
 		}
 		this[_addressSym] = addr;
@@ -41,12 +41,12 @@ export class ROMAddress {
 	}
 
 	static fromAddress(addr: number): ROMAddress {
-		let sect = FlashMemory.addressToSector(addr);
+		let sect = Utilities.addressToSector(addr);
 		return new ROMAddress(addr, sect);
 	}
 
 	static fromSector(sect: number): ROMAddress {
-		let addr = FlashMemory.sectorToAddress(sect);
+		let addr = Utilities.sectorToAddress(sect);
 		return new ROMAddress(addr, sect);
 	}
 }
