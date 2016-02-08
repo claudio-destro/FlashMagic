@@ -10,6 +10,7 @@
     "serialport": "^2.0.5"
   },
   "devDependencies": {
+    "mocha": "^2.4.5",
     "tsd": "^0.6.5",
     "typescript": "^1.7.5"
   },
@@ -32,6 +33,9 @@
     "lpc"
   ],
   "scripts": {
-    "prepublish": "tsc -d"
+    "prepublish": "tsc -d",
+    "pretest": "tsc test/*Test.ts --target es5 --module commonjs --moduleResolution node",
+    "posttest": "rm -fr test/*Test.js",
+    "test": "mocha"
   }
 }
