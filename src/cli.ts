@@ -1,9 +1,5 @@
-import {InSystemProgramming} from "./InSystemProgramming";
-import {LPCProgrammer} from './LPCProgrammer';
-import {MemoryReader} from './MemoryReader';
-import * as Handshake from "./Handshake";
-import {PART_IDENTIFICATIONS} from './PartIdentifications';
 import {Progress} from './Progress';
+import * as FlashMagic from './index';
 
 var dump = require('buffer-hexdump');
 import * as program from 'commander';
@@ -21,7 +17,7 @@ program.command('write')
   .option('-A, --address <address>', 'ROM address', parseInt)
   .option('-I, --input <file>', 'input file', null)
   .action((cmd) => {
-    Handshake.open(program['port'])
+    FlashMagic.open(program['port'])
       .then((isp) => {
         isp.verbose = !!program['verbose'];
         return programFile(isp, cmd.input, cmd.address)
@@ -34,7 +30,7 @@ program.command('write')
 program.command('ping')
   .description('ping device')
   .action(() => {
-    Handshake.open(program['port'])
+    FlashMagic.open(program['port'])
       .then(isp => {
         isp.verbose = !!program['verbose'];
         pingDevice(isp);
@@ -48,10 +44,10 @@ program.command('read')
   .option('-L, --length <length>', 'length', parseInt)
   .option('-O, --output <file>', 'output file', null)
   .action((cmd) => {
-    Handshake.open(program['port'])
+    FlashMagic.open(program['port'])
       .then(isp => {
         isp.verbose = !!program['verbose'];
-        let reader = new MemoryReader(isp);
+        let reader = new FlashMagic.MemoryReader(isp);
         return reader.readFully({
           address: cmd.address,
           length: cmd.length
@@ -75,11 +71,11 @@ if (program.args.length === 0) {
   program.help();
 }
 
-function programFile(isp: InSystemProgramming, path: string, address: number): Promise<void> {
+function programFile(isp: FlashMagic.InSystemProgramming, path: string, address: number): Promise<void> {
   return isp.unlock().then(() => {
     let size = fs.statSync(path).size;
     let count = 0;
-    let programmer = new LPCProgrammer(isp, address, size);
+    let programmer = new FlashMagic.Programmer(isp, address, size);
     return new Promise<void>((resolve, reject) => {
       let stream = fs.createReadStream(path);
       let progress = new Progress();
@@ -96,12 +92,12 @@ function programFile(isp: InSystemProgramming, path: string, address: number): P
   });
 }
 
-function pingDevice(isp: InSystemProgramming): void {
+function pingDevice(isp: FlashMagic.InSystemProgramming): void {
   let count = 0;
   (function loop(): void {
     let start = Date.now();
     isp.readPartIdentification().then(partId => {
-      console.log(`LPC${PART_IDENTIFICATIONS[partId] || partId} seq=${count++} time=${Date.now() - start} ms`);
+      console.log(`${FlashMagic.toProcessorString(partId)} seq=${count++} time=${Date.now() - start} ms`);
       setTimeout(loop, 1000);
     }).catch(error => {
       console.error(error);

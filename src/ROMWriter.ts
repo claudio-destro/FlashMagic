@@ -1,7 +1,7 @@
 var Symbol = require('es6-symbol');
 
 import {InSystemProgramming} from './InSystemProgramming';
-import * as FlashMemory from './FlashMemory';
+import * as Utilities from './Utilities';
 import {MemoryBlock} from './MemoryBlock';
 import {RAMAddress} from './RAMAddress';
 import {ROMBlock} from './ROMBlock';
@@ -24,7 +24,7 @@ export class ROMWriter implements MemoryBlock {
   }
 
   eraseBlock(): Promise<ROMWriter> {
-    const endSect = FlashMemory.addressToSector(this.address + this.length - 1);
+    const endSect = Utilities.addressToSector(this.address + this.length - 1);
     return this.isp.unlock()
       .then(() => this.isp.sendCommand(`P ${this.sector} ${endSect}`))
       .then(() => this.isp.sendCommand(`E ${this.sector} ${endSect}`))
@@ -32,7 +32,7 @@ export class ROMWriter implements MemoryBlock {
   }
 
   copyRAMToFlash(srcAddr: RAMAddress, count: number): Promise<ROMWriter> {
-    const endSect = FlashMemory.addressToSector(this.address + count - 1);
+    const endSect = Utilities.addressToSector(this.address + count - 1);
     return this.isp.unlock()
       .then(() => this.isp.sendCommand(`P ${this.sector} ${endSect}`))
       .then(() => this.isp.sendCommand(`C ${this.address} ${srcAddr} ${count}`))
@@ -53,7 +53,7 @@ export class ROMWriter implements MemoryBlock {
   // adjust block avoiding overflows and misalignments
   private increment(count: number): ROMBlock {
     // count = Math.min(count, this.size);
-    count = FlashMemory.alignCount(count);
+    count = Utilities.alignCount(count);
     return this.block.adjust(count);
   }
 }

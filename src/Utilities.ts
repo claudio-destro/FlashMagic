@@ -20,8 +20,8 @@ export const MAX_SECTOR = SECTOR_ADDRESS.length - MIN_SECTOR;
 export const MIN_ROM_ADDRESS = SECTOR_ADDRESS[MIN_SECTOR];
 export const MAX_ROM_ADDRESS = SECTOR_ADDRESS[MAX_SECTOR + 1] - 1;
 
-export const LINES_PER_CHUNK = 20;
-export const BYTES_PER_LINE = 45;
+export const LINES_PER_UUENCODED_CHUNK = 20;
+export const BYTES_PER_UUENCODED_LINE = 45;
 
 export function addressToSector(addr: number): number {
 	if (addr >= MIN_ROM_ADDRESS) {

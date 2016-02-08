@@ -1,7 +1,5 @@
 import {InSystemProgramming} from './InSystemProgramming';
-import * as FlashMemory from './FlashMemory';
 import {RAMAddress} from './RAMAddress';
-import {ROMBlock} from './ROMBlock';
 import {RAMWriter} from './RAMWriter';
 import {ROMWriter} from './ROMWriter';
 import * as UserCode from './UserCode';
@@ -13,7 +11,7 @@ function toBuffer(data: Buffer | String): Buffer {
 	return Buffer.isBuffer(data) ? <Buffer>data : new Buffer(<string>data, 'binary');
 }
 
-export class LPCProgrammer extends EventEmitter {
+export class Programmer extends EventEmitter {
 
 	private uploader: RAMWriter;
 	private writer: ROMWriter;
@@ -28,7 +26,7 @@ export class LPCProgrammer extends EventEmitter {
 		this.writer = new ROMWriter(isp, destAddr, length);
 	}
 
-	program(readable: Readable): LPCProgrammer {
+	program(readable: Readable): Programmer {
 		this.writer.eraseBlock().then(() => this.doProgram(readable));
 		return this;
 	}
@@ -97,7 +95,7 @@ export class LPCProgrammer extends EventEmitter {
 				chunk = chunk.slice(written);
 				if (offset === buffer.length) {
 					emitStart();
-					this.emit('chunk', buffer);
+					this.emit('chunk', buffer, this.writer.address);
 					this.doProgramBuffer(buffer)
 						.then(resetBuffer)
 						.then(next)

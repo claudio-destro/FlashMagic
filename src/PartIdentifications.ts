@@ -1,7 +1,7 @@
 // http://antena.fe.uni-lj.si/literatura/VajeOK/USB2138/Pekac/lpcsp/src/lpcsp.c
 // https://github.com/lopple/lpcsp
 
-export var PART_IDENTIFICATIONS = {
+var PART_IDENTIFICATIONS = {
   0x00008100: '810',
   0x00008110: '811',
   0x00008120: '812',
@@ -137,3 +137,8 @@ export var PART_IDENTIFICATIONS = {
   369164085: '2468',
   386006837: '2478',
 };
+
+export function toProcessorString(id: string): string {
+  let processor = PART_IDENTIFICATIONS[id];
+  return processor ? `LPC${processor}` : id;
+}

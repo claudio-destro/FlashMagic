@@ -1,5 +1,6 @@
 lib/
 node_modules/
+test/*.js
 typings/
 npm-debug.log
 *.bin

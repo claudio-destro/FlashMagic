@@ -1,6 +1,6 @@
 var Symbol = require('es6-symbol');
 
-import * as FlashMemory from './FlashMemory';
+import * as Utilities from './Utilities';
 import {MemoryBlock} from './MemoryBlock';
 import {ROMAddress} from './ROMAddress';
 
@@ -19,7 +19,7 @@ export class ROMBlock implements MemoryBlock {
 			throw new RangeError(`ROM block size ${size} must be >= 0`);
 		}
 		let m = n + size - 1;
-		if (m > FlashMemory.MAX_ROM_ADDRESS) {
+		if (m > Utilities.MAX_ROM_ADDRESS) {
 			throw new RangeError(`ROM block [0x${n.toString(16)}...0x${m.toString(16)}] out of address space`);
 		}
 		this[_addressSym] = addr;
@@ -53,7 +53,7 @@ export class ROMBlock implements MemoryBlock {
 
 	static fromSectorRange(start: number, end: number): ROMBlock {
 		let startAddr = ROMAddress.fromSector(start);
-		let endAddr = FlashMemory.sectorToAddress(end) + FlashMemory.sectorSize(end);
+		let endAddr = Utilities.sectorToAddress(end) + Utilities.sectorSize(end);
 		return new ROMBlock(startAddr, endAddr - startAddr.address);
 	}
 
