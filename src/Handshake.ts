@@ -3,10 +3,11 @@ import {InSystemProgramming} from './InSystemProgramming';
 const ECHO = false;
 const INITIAL_BAUDRATE = 115200;
 const INITIAL_VERBOSITY = true;
+
 const SYNCHRONIZED = 'Synchronized';
 const SYNC_REGEXP = new RegExp(`^\\?*${SYNCHRONIZED}`);
 
-function handshake(isp: InSystemProgramming, count: number): Promise<InSystemProgramming> {
+export function handshake(isp: InSystemProgramming, count: number): Promise<InSystemProgramming> {
   isp.verbose = INITIAL_VERBOSITY;
   return new Promise<InSystemProgramming>((resolve, reject) => {
     console.log(`Sync'ing...`);
