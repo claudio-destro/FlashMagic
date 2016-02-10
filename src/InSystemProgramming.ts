@@ -206,7 +206,10 @@ export class InSystemProgramming {
   get bootcodeVersion(): number { return this[_bootVerSym]; }
 
   readBootcodeVersion(): Promise<string> {
-    return this.sendCommand('K').then(() => this.read())
-      .then(bootVer => this[_bootVerSym] = bootVer);
+    let major_ = '';
+    return this.sendCommand('K')
+      .then(() => this.read())
+      .then(major => Promise.all([major, this.read()]))
+      .then(ver => this[_bootVerSym] = `${ver[0]}.${ver[1]}`);
   }
 }

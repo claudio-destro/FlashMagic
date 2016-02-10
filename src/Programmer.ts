@@ -34,24 +34,24 @@ export class Programmer extends EventEmitter {
   private doProgram(readable: Readable): void {
 
     const buffer = new Buffer(this.chunkSize);
-    var offset: number;
-    var ended = false;
-    var startEmitted = false;
+    let offset: number;
+    let ended = false;
+    let startEmitted = false;
 
-    function resetBuffer(): void {
+    let resetBuffer = (): void => {
       offset = 0;
       buffer.fill(0);
       this.uploader.address = new RAMAddress(this.srcAddr);
-    }
+    };
 
-    function emitStart(): void {
+    let emitStart = (): void => {
       if (!startEmitted) {
         startEmitted = true;
         this.emit('start');
       }
-    }
+    };
 
-    function finish(): void {
+    let finish = (): void => {
       emitStart();
       if (offset) {
         this.emit('chunk', buffer.slice(0, offset));
@@ -61,7 +61,7 @@ export class Programmer extends EventEmitter {
       } else {
         this.emit('end');
       }
-    }
+    };
 
     resetBuffer();
 
@@ -89,7 +89,7 @@ export class Programmer extends EventEmitter {
         }
       }
 
-      function loop(): void {
+      let loop = (): void => {
         let written = Math.min(buffer.length - offset, chunk.length);
         chunk.copy(buffer, offset, 0, written);
         offset += written;
