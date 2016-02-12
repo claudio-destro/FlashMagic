@@ -1,0 +1,38 @@
+var gulp = require('gulp');
+var merge = require('merge2');
+var mocha = require('gulp-mocha');
+var rm = require('gulp-rm');
+var ts = require('gulp-typescript');
+
+var tsconfig = require('./tsconfig.json');
+
+gulp.task('default', ['compile']);
+gulp.task('dist', ['clean', 'compile', 'test']);
+
+gulp.task('compile', function () {
+  var ret = gulp
+    .src(['src/**/*.ts', 'typings/**/*.d.ts'])
+    .pipe(ts(tsconfig.compilerOptions));
+   return merge([
+     ret.dts.pipe(gulp.dest('lib/')),
+     ret.js.pipe(gulp.dest('lib/')),
+   ]);
+});
+
+gulp.task('clean', function () {
+  return gulp
+    .src(['lib/**/*', 'test/**/*Test.js'], { read: false })
+    .pipe(rm({ async: false }));
+});
+
+gulp.task('test', ['compile'], function () {
+  return gulp
+    .src(['test/**/*Test.ts', 'typings/**/*.d.ts'])
+    .pipe(ts({
+      target: 'es5',
+      module: 'commonjs',
+      moduleResolution: 'node'
+    }))
+    .pipe(gulp.dest('test/'))
+    .pipe(mocha());
+});
