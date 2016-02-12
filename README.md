@@ -13,10 +13,9 @@ Please, refer to [cli.ts](https://github.com/claudio-destro/flashmagic.js/blob/m
 I usually have `./node_modules/.bin` in my `PATH` so I just have to execute the following commands to perform a clean build:
 
 ```bash
-# rm -fr lib/ node_modules/ typings/
 # npm install
 # tsd install
-# tsc -d
+# gulp dist
 ```
 
 ## Disclaimer
