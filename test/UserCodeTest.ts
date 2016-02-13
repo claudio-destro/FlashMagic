@@ -1,4 +1,4 @@
-/// <reference path="../typings/tsd.d.ts" />
+/// <reference path="../typings/main.d.ts" />
 import {validateVectorTable} from '../lib/UserCode';
 import * as assert from 'assert';
 

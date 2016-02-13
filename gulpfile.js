@@ -11,12 +11,12 @@ gulp.task('dist', ['clean', 'compile', 'test']);
 
 gulp.task('compile', function () {
   var ret = gulp
-    .src(['src/**/*.ts', 'typings/**/*.d.ts'])
+    .src(['src/**/*.ts', 'typings/main.d.ts'])
     .pipe(ts(tsconfig.compilerOptions));
-   return merge([
-     ret.dts.pipe(gulp.dest('lib/')),
-     ret.js.pipe(gulp.dest('lib/')),
-   ]);
+  return merge([
+    ret.dts.pipe(gulp.dest('lib/')),
+    ret.js.pipe(gulp.dest('lib/')),
+  ]);
 });
 
 gulp.task('clean', function () {
@@ -27,12 +27,8 @@ gulp.task('clean', function () {
 
 gulp.task('test', ['compile'], function () {
   return gulp
-    .src(['test/**/*Test.ts', 'typings/**/*.d.ts'])
-    .pipe(ts({
-      target: 'es5',
-      module: 'commonjs',
-      moduleResolution: 'node'
-    }))
+    .src(['test/**/*Test.ts', 'typings/main.d.ts'])
+    .pipe(ts(tsconfig.compilerOptions))
     .pipe(gulp.dest('test/'))
     .pipe(mocha());
 });

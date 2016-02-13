@@ -1,4 +1,4 @@
-/// <reference path="../typings/tsd.d.ts" />
+/// <reference path="../typings/main.d.ts" />
 import {UUEncoder} from '../lib/UUEncoder';
 import * as assert from 'assert';
 
