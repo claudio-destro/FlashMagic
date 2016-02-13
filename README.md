@@ -14,7 +14,7 @@ I usually have `./node_modules/.bin` in my `PATH` so I just have to execute the 
 
 ```bash
 # npm install
-# tsd install
+# typings install
 # gulp dist
 ```
 
