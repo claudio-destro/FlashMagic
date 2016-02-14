@@ -17,6 +17,7 @@
     "gulp-typescript": "^2.11.0",
     "merge2": "^1.0.1",
     "mocha": "^2.4.5",
+    "run-sequence": "^1.1.5",
     "typescript": "^1.7.5",
     "typings": "^0.6.8"
   },
@@ -32,11 +33,15 @@
     "url": "https://github.com/claudio-destro/flashmagic.js.git"
   },
   "keywords": [
+    "es6",
     "typescript",
     "javascript",
     "serialport",
     "nxp",
     "lpc"
   ],
-  "scripts": {}
+  "scripts": {
+    "prepublish": "gulp publish",
+    "test": "gulp test"
+  }
 }
