@@ -33,6 +33,6 @@ export function handshake(isp: InSystemProgramming, count: number = Infinity, ti
             process.nextTick(synchronize);
           }
         });
-    })();
+    })(); // start loop, until no error
   });
 }
