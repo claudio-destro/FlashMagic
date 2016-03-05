@@ -161,8 +161,15 @@ export class InSystemProgramming {
       if (data !== ack) {
         throw new Error(`Not "${ack}": ${JSON.stringify(data)}`);
       }
+      if (data === 'Synchronized') {
+        this.reset();
+      }
       return this;
     });
+  }
+
+  private reset(): void {
+    this.echo = true;
   }
 
   /////////////

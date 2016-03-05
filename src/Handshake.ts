@@ -8,7 +8,6 @@ const SYNC_REGEXP = new RegExp(`^\\?*${SYNCHRONIZED}`);
 export function handshake(isp: InSystemProgramming, count: number = Infinity, timeout: number = 20): Promise<InSystemProgramming> {
   return new Promise<InSystemProgramming>((resolve, reject) => {
     console.log(`Sync'ing...`);
-    const cclk = isp.cclk.toString(10);
     (function synchronize() {
       isp.write('?')
         .then(() => isp.read(timeout))
@@ -20,8 +19,7 @@ export function handshake(isp: InSystemProgramming, count: number = Infinity, ti
         })
         .then(isp => isp.assert(SYNCHRONIZED))
         .then(isp => isp.assert('OK'))
-        .then(isp => isp.writeln(cclk))
-        .then(isp => isp.assert(cclk))
+        .then(isp => isp.sendLine(isp.cclk.toString(10)))
         .then(isp => isp.assert('OK'))
         .then(isp => isp.setEcho(ECHO))
         .then(isp => isp.readPartIdentification())
