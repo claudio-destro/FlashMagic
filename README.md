@@ -1,3 +1,5 @@
+[![npm version](https://badge.fury.io/js/flashmagic.js.svg)](https://badge.fury.io/js/flashmagic.js)
+
 # FlashMagic.js
 
 A library for programming flash based microcontrollers from [NXP](http://www.nxp.com/microcontrollers) using a serial protocol.
@@ -24,4 +26,4 @@ This tool is **not** related to [Flash Magic](http://www.flashmagictool.com).
 
 Its primary objective is just to communicate with a custom USB bootloader by using a well-known protocol.
 
-A side effect is to be **100% compatible** with legacy [NXP](http://www.nxp.com/microcontrollers) serial bootlader.
+A side effect is to be **100% compatible** with legacy [NXP](http://www.nxp.com/microcontrollers) serial bootloader.
