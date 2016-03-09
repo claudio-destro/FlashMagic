@@ -17,10 +17,10 @@ export class Programmer extends EventEmitter {
   private writer: ROMWriter;
 
   constructor(private isp: InSystemProgramming,
-              private destAddr: number,
-              private length: number,
-              private srcAddr: number = RAMAddress.BASE + 1024 * 10,
-              private chunkSize: number = 4096) {
+    private destAddr: number,
+    private length: number,
+    private srcAddr: number = RAMAddress.BASE + 1024 * 10,
+    private chunkSize: number = 4096) {
     super();
     this.uploader = new RAMWriter(isp);
     this.writer = new ROMWriter(isp, destAddr, length);

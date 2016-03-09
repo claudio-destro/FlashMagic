@@ -2,25 +2,18 @@ import {InSystemProgramming} from './InSystemProgramming';
 
 const ECHO = false;
 
-const SYNCHRONIZED = 'Synchronized';
-const SYNC_REGEXP = new RegExp(`^\\?*${SYNCHRONIZED}`);
-
 export function handshake(isp: InSystemProgramming, count: number = Infinity, timeout: number = 20): Promise<InSystemProgramming> {
   return new Promise<InSystemProgramming>((resolve, reject) => {
     console.log(`Sync'ing...`);
     (function synchronize() {
       isp.write('?')
-        .then(() => isp.read(timeout))
-        .then(ack => {
-          if (!ack.match(SYNC_REGEXP)) {
-            throw new RangeError('Not synchronized');
-          }
-          return isp.writeln(SYNCHRONIZED);
-        })
-        .then(isp => isp.assert(SYNCHRONIZED))
-        .then(isp => isp.assert('OK'))
+        .then(() => isp.assert(/^\?*Synchronized/, timeout))
+        .then(isp => isp.writeln('Synchronized'))
+        .then(isp => isp.assert(/Synchronized/))
+        .then(isp => isp.assertOK())
+        .then(isp => isp.reset())
         .then(isp => isp.sendLine(isp.cclk.toString(10)))
-        .then(isp => isp.assert('OK'))
+        .then(isp => isp.assertOK())
         .then(isp => isp.setEcho(ECHO))
         .then(isp => isp.readPartIdentification())
         .then(partId => isp.readBootcodeVersion())
