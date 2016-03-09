@@ -135,7 +135,9 @@ export class InSystemProgramming {
       p = p.then(() => {
         return this.read();
       }).then((ack) => {
-        if (ack !== data) throw new Error(`Not acknowledged: ${JSON.stringify(ack)}`);
+        if (ack !== data) {
+          throw new Error(`Not acknowledged: ${JSON.stringify(ack)}`);
+        }
         return this;
       });
     }
@@ -156,20 +158,27 @@ export class InSystemProgramming {
     });
   }
 
-  assert(ack: string): Promise<InSystemProgramming> {
+  assertOK(): Promise<InSystemProgramming> {
     return this.read().then((data) => {
-      if (data !== ack) {
-        throw new Error(`Not "${ack}": ${JSON.stringify(data)}`);
-      }
-      if (data === 'Synchronized') {
-        this.reset();
+      if (data !== 'OK') {
+        throw new Error(`Not "OK": ${JSON.stringify(data)}`);
       }
       return this;
     });
   }
 
-  private reset(): void {
+  assert(ack: RegExp, timeout?: number): Promise<InSystemProgramming> {
+    return this.read(timeout).then((data) => {
+      if (data.match(ack) === null) {
+        throw new Error(`Not /${ack.source}/: ${JSON.stringify(data)}`);
+      }
+      return this;
+    });
+  }
+
+  reset(): InSystemProgramming {
     this.echo = true;
+    return this;
   }
 
   /////////////
