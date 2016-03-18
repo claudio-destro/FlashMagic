@@ -21,7 +21,7 @@
     "typescript": "^1.7.5",
     "typings": "^0.6.8"
   },
-  "main": "lib/index.js",
+  "main": "index.js",
   "bin": {
     "flashmagic": "bin/flashmagic.js"
   },
