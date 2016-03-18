@@ -120,6 +120,7 @@ export class InSystemProgramming {
   close(): Promise<InSystemProgramming> {
     return new Promise<InSystemProgramming>((resolve, reject) => {
       this.serialport.close((error: any) => {
+        this.serialport = null; // GC
         return error ? reject(error) : resolve(this);
       });
     });

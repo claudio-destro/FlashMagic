@@ -6,11 +6,32 @@ A library for programming flash based microcontrollers from [NXP](http://www.nxp
 
 It implements a function similar to [Flash Magic](http://www.flashmagictool.com) but using [Node.js](https://github.com/nodejs/node), [TypeScript](https://github.com/microsoft/typescript) and [node-serialport](https://github.com/voodootikigod/node-serialport) instead.
 
-## Usage
+## Install via npm
 
-Please, refer to [cli.ts](https://github.com/claudio-destro/flashmagic.js/blob/master/src/cli.ts) for more information about usage.
+```bash
+# npm install -g flashmagic.js
+# flashmagic --help
+```
 
-## Note
+## API
+
+Please, refer to [cli.ts](https://github.com/claudio-destro/flashmagic.js/blob/master/src/cli.ts) for more information about API usage.
+
+Minimal sample code:
+
+```javascript
+import * as FlashMagic from 'flashmagic.js/lib';
+
+...
+
+let isp = new FlashMagic.InSystemProgramming(path, baudrate, cclk);
+isp
+  .open()
+  .then(isp => FlashMagic.handshake(isp))
+  .catch(error => console.error(error));
+```
+
+## Build from code
 
 I usually have `./node_modules/.bin` in my `PATH` so I just have to execute the following commands to perform a clean build:
 
