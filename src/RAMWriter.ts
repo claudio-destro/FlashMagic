@@ -18,7 +18,7 @@ export class RAMWriter {
   writeToRAM(buffer: Buffer): Promise<RAMWriter> {
     let ret: Promise<any> = this.isp.sendCommand(`W ${this.address} ${buffer.length}`)
       .then(() => this.uploadChunk(buffer));
-    if (process.env['ISP'] === 'legacy') {
+    if (InSystemProgramming.LEGACY_MODE) {
       // XXX our custom bootloader sends a CMD_SUCCESS after every write ;(
       ret = ret.then(() => this.isp.assertSuccess());
     }

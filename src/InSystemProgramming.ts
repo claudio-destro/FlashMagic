@@ -1,5 +1,5 @@
 var Symbol = require('es6-symbol');
-var com = require('serialport');
+var SerialPort = require('serialport');
 
 import * as ReturnCode from './ReturnCode';
 
@@ -30,6 +30,8 @@ const _partIdSym = Symbol();
 
 export class InSystemProgramming {
 
+  public static get LEGACY_MODE() { return process.env['ISP'] === 'legacy' };
+
   private serialport;
 
   private queue: DataQueue<string> = LINE_QUEUE;
@@ -46,12 +48,13 @@ export class InSystemProgramming {
 
   private reinitialize(baud: number, stop: number) {
     this[_baudRateSym] = baud;
-   	this.serialport = new com.SerialPort(this.path, {
+   	this.serialport = new SerialPort(this.path, {
       baudRate: baud,
       stopBits: stop,
       parity: 'none',
-      parser: com.parsers.readline('\r\n')
-    }, false); // open later
+      parser: SerialPort.parsers.readline('\r\n'),
+      autoOpen: false // open later
+    });
     this.serialport.on('data', (data: Buffer | String) => {
       const s = data.toString();
       this.logger.log(`---> ${s}`);

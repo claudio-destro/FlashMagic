@@ -9,6 +9,7 @@ import * as fs from 'fs';
 const DEFAUL_COM_PORT = '/dev/tty.usbmodemFD131';
 const DEFAUL_BAUD_RATE = 115200;
 const DEFAUL_CRYSTAL_CLOCK = 12000000;
+const DEFAULT_PING_COMMAND = FlashMagic.InSystemProgramming.LEGACY_MODE ? 'U' : 'J';
 
 program
   .option('-P, --port [port]', `serial port [${DEFAUL_COM_PORT}]`, DEFAUL_COM_PORT)
@@ -29,9 +30,10 @@ program.command('write')
 
 program.command('ping')
   .description('ping device')
-  .action(() => {
+  .option('-C, --command <command>', `J or U [${DEFAULT_PING_COMMAND}]`, DEFAULT_PING_COMMAND)
+  .action((cmd) => {
     open()
-      .then(isp => pingDevice(isp))
+      .then(isp => pingDevice(isp, cmd.command))
       .catch(catchError);
   });
 
@@ -86,18 +88,31 @@ function programFile(isp: FlashMagic.InSystemProgramming, path: string, address:
   });
 }
 
-function pingDevice(isp: FlashMagic.InSystemProgramming): void {
+function pingDevice(isp: FlashMagic.InSystemProgramming, cmd: string): void {
   let count = 0;
   (function loop(): void {
     let start = Date.now();
-    isp.readPartIdentification().then(partId => {
-      console.log(`${FlashMagic.toProcessorString(partId)} seq=${count++} time=${Date.now() - start} ms`);
+    issuePing(isp, cmd).then(() => {
+      console.log(`seq=${count++} time=${Date.now() - start} ms`);
       setTimeout(loop, 1000);
     }).catch(error => {
       console.error(error);
       setTimeout(loop, 1000);
     });
   })();
+}
+
+function issuePing(isp: FlashMagic.InSystemProgramming, cmd: string): Promise<FlashMagic.InSystemProgramming> {
+  switch (cmd) {
+  case 'J':
+    return isp.readPartIdentification().then(partId => {
+      console.log(FlashMagic.toProcessorString(partId));
+      return isp;
+    });
+  case 'U':
+    return isp.unlock();
+  }
+  return Promise.resolve(isp);
 }
 
 function catchError(error: any): void {
