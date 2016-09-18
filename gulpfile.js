@@ -7,11 +7,13 @@ var ts = require('gulp-typescript');
 
 var tsconfig = require('./tsconfig.json');
 
+var typingsMain = 'typings/index.d.ts';
+
 gulp.task('default', ['build']);
 
 gulp.task('build', function () {
   var ret = gulp
-    .src(['src/**/*.ts', 'typings/main.d.ts'])
+    .src(['src/**/*.ts', typingsMain])
     .pipe(ts(tsconfig.compilerOptions));
   return merge2([
     ret.dts.pipe(gulp.dest('lib/')),
@@ -20,7 +22,7 @@ gulp.task('build', function () {
 });
 
 gulp.task('test', ['build'], function () {
-  return gulp.src(['test/**/*Test.ts', 'typings/main.d.ts'])
+  return gulp.src(['test/**/*Test.ts', typingsMain])
     .pipe(ts(tsconfig.compilerOptions))
     .pipe(gulp.dest('test/'))
     .pipe(mocha());
