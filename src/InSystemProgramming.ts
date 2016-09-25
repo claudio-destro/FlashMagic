@@ -30,7 +30,7 @@ const _partIdSym = Symbol();
 
 export class InSystemProgramming {
 
-  public static get LEGACY_MODE() { return process.env['ISP'] === 'legacy' };
+  public static get VLAB_MODE() { return process.env['ISP'] === 'vlab' };
 
   private serialport;
 

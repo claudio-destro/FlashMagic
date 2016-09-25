@@ -14,7 +14,7 @@ export function handshake(isp: InSystemProgramming, count: number = Infinity, ti
         .then(isp => isp.reset())
         .then(isp => isp.sendLine(isp.cclk.toString(10)))
         .then(isp => isp.assertOK());
-      if (!InSystemProgramming.LEGACY_MODE) {
+      if (!InSystemProgramming.VLAB_MODE) {
         // XXX our custom bootloader implements only a subset
         ret = ret.then(isp => isp.setEcho(ECHO))
               .then(isp => isp.readPartIdentification())
