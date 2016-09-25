@@ -9,8 +9,8 @@ It implements a function similar to [Flash Magic](http://www.flashmagictool.com)
 ## Install via npm
 
 ```bash
-# npm install -g flashmagic.js
-# flashmagic --help
+$ sudo npm install -g flashmagic.js
+$ flashmagic --help
 ```
 
 ## API
@@ -20,7 +20,7 @@ Please, refer to [cli.ts](https://github.com/claudio-destro/flashmagic.js/blob/m
 Minimal sample code:
 
 ```javascript
-import * as FlashMagic from 'flashmagic.js/lib';
+import * as FlashMagic from 'flashmagic.js';
 
 ...
 
@@ -36,9 +36,8 @@ isp
 I usually have `./node_modules/.bin` in my `PATH` so I just have to execute the following commands to perform a clean build:
 
 ```bash
-# npm install
-# typings install
-# gulp publish
+$ typings install
+$ npm install
 ```
 
 ## Disclaimer
