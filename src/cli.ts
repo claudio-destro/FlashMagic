@@ -9,7 +9,7 @@ import * as fs from 'fs';
 const DEFAUL_COM_PORT = '/dev/tty.usbmodemFD131';
 const DEFAUL_BAUD_RATE = 115200;
 const DEFAUL_CRYSTAL_CLOCK = 12000000;
-const DEFAULT_PING_COMMAND = FlashMagic.InSystemProgramming.LEGACY_MODE ? 'U' : 'J';
+const DEFAULT_PING_COMMAND = FlashMagic.InSystemProgramming.VLAB_MODE ? 'U' : 'J';
 
 program
   .option('-P, --port [port]', `serial port [${DEFAUL_COM_PORT}]`, DEFAUL_COM_PORT)
@@ -30,7 +30,7 @@ program.command('write')
 
 program.command('ping')
   .description('ping device')
-  .option('-C, --command <command>', `J or U [${DEFAULT_PING_COMMAND}]`, DEFAULT_PING_COMMAND)
+  .option('-C, --command <command>', `J (read part identification) or U (unlock) [${DEFAULT_PING_COMMAND}]`, DEFAULT_PING_COMMAND)
   .action((cmd) => {
     open()
       .then(isp => pingDevice(isp, cmd.command))
