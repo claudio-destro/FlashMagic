@@ -12,10 +12,10 @@ const DEFAUL_CRYSTAL_CLOCK = 12000000;
 const DEFAULT_PING_COMMAND = FlashMagic.InSystemProgramming.VLAB_MODE ? 'U' : 'J';
 
 program
-  .option('-P, --port [port]', `serial port [${DEFAUL_COM_PORT}]`, DEFAUL_COM_PORT)
-  .option('-B, --baudrate [baudrate]', `baudrate [${DEFAUL_BAUD_RATE}]`, DEFAUL_BAUD_RATE)
+  .option('-P, --port <port>', `serial port [${DEFAUL_COM_PORT}]`, DEFAUL_COM_PORT)
+  .option('-B, --baudrate <baudrate>', `baudrate [${DEFAUL_BAUD_RATE}]`, DEFAUL_BAUD_RATE)
   .option('-V, --verbose', `make the operation more talkative`, true)
-  .option('--cclk [cclk]', `crystal clock in Hz [${(DEFAUL_CRYSTAL_CLOCK / 1000000).toFixed(3)} MHz]`, DEFAUL_CRYSTAL_CLOCK);
+  .option('--cclk <cclk>', `crystal clock in Hz [${(DEFAUL_CRYSTAL_CLOCK / 1000000).toFixed(3)} MHz]`, DEFAUL_CRYSTAL_CLOCK);
 
 program.command('write')
   .description('program file')

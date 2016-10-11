@@ -8,15 +8,15 @@
     "buffer-hexdump": "^1.0.0",
     "commander": "^2.9.0",
     "es6-symbol": "^3.1.0",
-    "serialport": "^4.0.1"
+    "serialport": "^4.0.3"
   },
   "devDependencies": {
     "gulp": "^3.9.1",
     "gulp-mocha": "^3.0.1",
     "gulp-rm": "^1.0.1",
-    "gulp-typescript": "^3.0.1",
+    "gulp-typescript": "^3.0.2",
     "merge2": "^1.0.2",
-    "mocha": "^3.0.2",
+    "mocha": "^3.1.1",
     "run-sequence": "^1.2.2",
     "typescript": "^2.0.3",
     "typings": "^1.4.0"
