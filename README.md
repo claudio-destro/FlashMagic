@@ -1,6 +1,7 @@
 [![npm version](https://badge.fury.io/js/flashmagic.js.svg)](https://badge.fury.io/js/flashmagic.js)
 
-## This project is very out of date and not maintained, please refer to [lpc-flash](https://github.com/cinderblock/lpc-flash) for a more updated version.
+### This project is very out of date and not maintained.
+### Please refer to [lpc-flash](https://github.com/cinderblock/lpc-flash) for a more updated version.
 
 # FlashMagic.js
 
